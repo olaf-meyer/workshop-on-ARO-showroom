@@ -34,7 +34,7 @@ apiVersion: v1
 kind: <Pod>
 metadata:
   annotations:
-    io.katacontainers.config.hypervisor.machine_type: Standard_D32as_v5
+    io.katacontainers.config.hypervisor.machine_type: Standard_DC8as_v5
 # ...
 ----
 +
