@@ -1,4 +1,4 @@
-= Install the OSC operator TESTTEST
+= Install the OSC operator
 
 Openshift sandboxed containers support for Red Hat Openshift provides you with built-in support for running Kata Containers as an additional optional runtime. The new runtime supports containers in dedicated virtual machines (VMs), providing improved workload isolation. This is particularly useful for performing the following tasks:
 
