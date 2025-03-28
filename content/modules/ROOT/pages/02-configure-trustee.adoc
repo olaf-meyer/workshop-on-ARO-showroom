@@ -124,7 +124,7 @@ You can configure the following values, policies, and secrets for Trustee:
 * Reference values for the Reference Value Provider Service(**mandatory**).
 * Optional: Secret for container image signature verification.
 * Container image signature verification policy (**mandatory**).
-* If using TDX: Provisioning Certificate Caching Service for Intel Trust Domain Extensions (TDX).
+* Provisioning Certificate Caching Service for Intel Trust Domain Extensions (TDX) (**used in this workshop but optional for non-TDX instances**).
 * Optional: Resource access policy.
 * Optional: Attestation policy.
 * Optional: Secret for custom keys for Trustee clients.
@@ -257,7 +257,7 @@ Note that `security-policy` will be later used in the xref:02-configure-trustee.
 
 **Purpose of this resource**: If your TEE is **Intel Trust Domain Extensions (TDX)**, meaning the instance size you use or plan to use (it's in `AZURE_INSTANCE_SIZES` list) is Standard_DC**e***, you must configure the Provisioning Certificate Caching Service (PCCS). The PCCS retrieves Provisioning Certification Key (PCK) certificates and caches them in a local database.
 
-For the purpose of this workshop, we will enable PCCS so the user will be able to deploy also TDX instance sizes.
+In this workshop, we will enable PCCS so the user will be able to deploy TDX instance sizes.
 
 [source,sh,role=execute]
 ----
