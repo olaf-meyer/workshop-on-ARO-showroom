@@ -174,7 +174,7 @@ You must create the container image signature verification policy because signat
 
 In this workshop, we will use a policy that disables signature verification. In a production environment is of course strongly recommended to enable it.
 
-For more information, see https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md[containers-policy.json 5, window=blank].
+For more information, see https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md[containers-policy.json 5, =blank=blank].
 
 Create a `security-policy-config.json` according to the following examples:
 
@@ -199,7 +199,7 @@ cat security-policy-config.json
 +
 Define some variables first:
 +
-Specify the image repository for `$SECURITY_POLICY_TRANSPORT`, for example, `docker`:. For more information, see https://github.com/containers/image/blob/main/docs/containers-transports.5.md[containers-transports 5, window=blank].
+Specify the image repository for `$SECURITY_POLICY_TRANSPORT`, for example, `docker`:. For more information, see https://github.com/containers/image/blob/main/docs/containers-transports.5.md[containers-transports 5, =blank=blank].
 +
 Specify the container `$SECURITY_POLICY_REGISTRY` and `$SECURITY_POLICY_IMAGE`, for example, `quay.io` and `my-image`.
 +
@@ -253,6 +253,42 @@ IMPORTANT: Do not alter the secret type, `security-policy`, or the key, `osc`.
 
 Note that `security-policy` will be later used in the xref:02-configure-trustee.adoc#trustee-kbsconfig[KbsConfig]
 
+==== **Provisioning Certificate Caching Service for TDX**
+
+**Purpose of this resource**: If your TEE is **Intel Trust Domain Extensions (TDX)**, meaning the instance size you use or plan to use (it's in `AZURE_INSTANCE_SIZES` list) is Standard_DC**e***, you must configure the Provisioning Certificate Caching Service (PCCS). The PCCS retrieves Provisioning Certification Key (PCK) certificates and caches them in a local database.
+
+For the purpose of this workshop, we will enable PCCS so the user will be able to deploy also TDX instance sizes.
+
+[source,sh,role=execute]
+----
+cat > tdx-config.yaml <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tdx-config
+  namespace: trustee-operator-system
+data:
+  sgx_default_qcnl.conf: |
+      {
+        "collateral_service": "https://api.trustedservices.intel.com/sgx/certification/v4/",
+        "pccs_url": "https://localhost:8081/sgx/certification/v4/"
+      }
+EOF
+
+cat tdx-config.yaml
+----
+
+IMPORTANT: Do not use the public Intel PCCS service. Use a local caching service on-premise or on the public cloud.
+
+For `pccs_url`, specify the PCCS URL. In this example we used `https://localhost:8081/sgx/certification/v4/`. Check the https://cc-enabling.trustedservices.intel.com/intel-tdx-enabling-guide/02/infrastructure_setup/#provisioning-certificate-caching-service-pccs[Intel PCCS documentation, window=blank] to learn more about them.
+
+Once `tdx-config.yaml` is ready, apply the ConfigMap.
+
+[source,sh,role=execute]
+----
+oc apply -f tdx-config.yaml
+----
+
 [#trustee-optional-config]
 === Optional configurations
 
@@ -283,45 +319,11 @@ oc create secret generic $CONTAINER_IMAGE_SIGNATURE_TYPE \
 
 Note that `$CONTAINER_IMAGE_SIGNATURE_TYPE` will be later used in the xref:02-configure-trustee.adoc#trustee-kbsconfig[KbsConfig]
 
-==== **Provisioning Certificate Caching Service for TDX**
-
-**Purpose of this resource**: If your TEE is **Intel Trust Domain Extensions (TDX)**, you must configure the Provisioning Certificate Caching Service (PCCS). The PCCS retrieves Provisioning Certification Key (PCK) certificates and caches them in a local database.
-
-IMPORTANT: Do not use the public Intel PCCS service. Use a local caching service on-premise or on the public cloud.
-
-[source,sh,role=execute]
-----
-cat > tdx-config.yaml <<EOF
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tdx-config
-  namespace: trustee-operator-system
-data:
-  sgx_default_qcnl.conf: | \
-      {
-        "collateral_service": "https://api.trustedservices.intel.com/sgx/certification/v4/",
-        "pccs_url": "<pccs_url>"
-      }
-EOF
-
-cat tdx-config.yaml
-----
-
-For `pccs_url`, specify the PCCS URL, for example, `https://localhost:8081/sgx/certification/v4/`.
-
-Once the `pccs_url` has been added, apply the ConfigMap.
-
-[source,sh,role=execute]
-----
-oc apply -f tdx-config.yaml
-----
-
 ==== **Resource access policy**
 
 **Purpose of this resource**: Resource policies control which secrets are released and are generally scoped to the workload. They allow the user define which attested workload has access to which resource, to avoid that the wrong client accesses data that it is not supposed to.
 
-In this example below we are creating a simple policy that accepts any request that doesn't come from the sample attester, ie an attester (client) that does not use TEE. For more information about resource access policies, and how to create stronger ones, look https://confidentialcontainers.org/docs/attestation/policies/#resource-policies[here, window=blank]
+In this example below we are creating a simple policy that accepts any request that doesn't come from the sample attester, ie an attester (client) that does not use TEE. For more information about resource access policies, and how to create stronger ones, look https://confidentialcontainers.org/docs/attestation/policies/#resource-policies[here, =blank=blank]
 
 [source,sh,role=execute]
 ----
@@ -415,7 +417,7 @@ EOF
 cat attestation-policy.yaml
 ----
 
-NOTE: For the `package policy`, the attestation policy follows the https://www.openpolicyagent.org/docs/latest/policy-language/[Open Policy Agent, window=blank] specification. In this example, the attestation policy compares the claims provided in the attestation report to the reference values registered in the RVPS database. The attestation process is successful only if all the values match.
+NOTE: For the `package policy`, the attestation policy follows the https://www.openpolicyagent.org/docs/latest/policy-language/[Open Policy Agent, =blank=blank] specification. In this example, the attestation policy compares the claims provided in the attestation report to the reference values registered in the RVPS database. The attestation process is successful only if all the values match.
 
 Once you defined your own policy, apply it.
 
@@ -477,9 +479,9 @@ spec:
   kbsDeploymentType: AllInOneDeployment
   kbsRvpsRefValuesConfigMapName: rvps-reference-values
   kbsSecretResources: ["kbsres1", "security-policy"]
+  tdxConfigSpec:
+    kbsTdxConfigMapName: tdx-config
 #  kbsResourcePolicyConfigMapName: resource-policy
-# tdxConfigSpec:
-#   kbsTdxConfigMapName: tdx-config
 # kbsAttestationPolicyConfigMapName: attestation-policy
 # kbsServiceType: <service_type>
 EOF
@@ -491,8 +493,8 @@ If you did the optional steps:
 
 * For enforced container image signature verification, extend `kbsSecretResources` list to also have the value of `$CONTAINER_IMAGE_SIGNATURE_TYPE`.
 * For custom resource policy, define `kbsResourcePolicyConfigMapName`.
-* For TDX PCCS define the `tdxConfigSpec` section
-* For custom attestation policy define `kbsAttestationPolicyConfigMapName`
+* If you are not planning to use TDX, disable the `tdxConfigSpec` section.
+* For custom attestation policy define `kbsAttestationPolicyConfigMapName`.
 * Define `kbsServiceType` if you created a service type other than the default `ClusterIP` service to expose applications within the cluster external traffic. You can specify `NodePort`, `LoadBalancer`, or `ExternalName`.
 
 Once the KbsConfig has been configured, apply it.

@@ -128,7 +128,7 @@ data:
   CLOUD_PROVIDER: "azure"
   VXLAN_PORT: "9000"
   AZURE_INSTANCE_SIZE: "Standard_DC8as_v5"
-  AZURE_INSTANCE_SIZES: "Standard_DC16as_v5,Standard_DC32as_v5"
+  AZURE_INSTANCE_SIZES: "Standard_DC8as_v5,Standard_DC8ads_v5, Standard_DC8es_v5, Standard_DC8eds_v5"
   AZURE_RESOURCE_GROUP: "${ARO_RESOURCE_GROUP}"
   AZURE_REGION: "${ARO_REGION}"
   AZURE_SUBNET_ID: "${ARO_WORKER_SUBNET_ID}"
@@ -145,10 +145,11 @@ cat pp-cm.yaml
 +
 IMPORTANT: Note the `AZURE_INSTANCE_SIZES` field. This field is used to specify additional instance sizes that the operator should support. By default, if not specified all new pod VM will be of type `AZURE_INSTANCE_SIZE`, but if specified in the pod yaml (see xref:03-deploy-worload.adoc#options[here]), it will use one of the types indicated in `AZURE_INSTANCE_SIZES`.
 Azure instance types are explained and listed https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/overview?tabs=breakdownseries%2Cgeneralsizelist%2Ccomputesizelist%2Cmemorysizelist%2Cstoragesizelist%2Cgpusizelist%2Cfpgasizelist%2Chpcsizelist[here, window=blank].
+Because of the quota limitations of this workshop, it is unlikely that it will be possible to deploy instances bigger than `Standard_DC8*`.
 
 It is also worth pointing the azure terminology for instances: the pattern is usually `Standard_X{C}{num_cpus}{a or e}xx_vx` where `C` stands for **Confidential**, `a` for CPUs using **AMD SEV/SNP** technology, and `e` for CPUs using **Intel TDX** technology. Therefore `Standard_DC8_es_v5` is a confidential instance with 8 Intel CPUs using TDX to provide data in use confidentiality.
 
-For this example, we are going to deploy AMD cpus, because they are available in all regions. If you want to deploy a TDX instance, check the region availability (usually `northeurope` is a good choice) and deploy a new workshop in that region.
+For this example, we are going to default the instance deployment AMD cpus, because they are available in all regions. If you want to deploy a TDX instance, check the catalog region availability (usually `northeurope` or `westeurope` are a good choice) and deploy a new workshop in that region.
 
 [source,sh,role=execute]
 ----
