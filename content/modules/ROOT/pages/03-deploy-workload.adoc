@@ -391,14 +391,14 @@ The pod is ready when the `STATUS` is in `Running`.
 +
 [source,sh,role=execute]
 ----
-oc exec -it ocp-cc-pod -- curl -s http://127.0.0.1:8006/cdh/resource/default/kbsres1/key1
+oc exec -it ocp-cc-pod -- curl -s http://127.0.0.1:8006/cdh/resource/default/kbsres1/key1 && echo ""
 ----
 +
 And as expected, the secret is returned successfully.
 +
 [source,texinfo,subs="attributes"]
 ----
-[azure@bastion ~]# oc exec -it ocp-cc-pod -- curl -s http://127.0.0.1:8006/cdh/resource/default/kbsres1/key1
+[azure@bastion ~]# oc exec -it ocp-cc-pod -- curl -s http://127.0.0.1:8006/cdh/resource/default/kbsres1/key1 && echo ""
 Confidential_Secret!
 ----
 +
@@ -406,7 +406,7 @@ IMPORTANT: Notice how the `curl` call is connecting with `http://127.0.0.1`. Thi
 
 . Trying any other command in `exec` will fail.
 +
-[source,sh,role=execute]
+[source,texinfo,subs="attributes"]
 ----
 [azure@bastion ~]# oc exec -it ocp-cc-pod -- bash
 error: Internal error occurred: error executing command in container: cannot enter container d60d9d18412d0e4d9bb2e29975b420e4535bac9d966452bc58775ba847cb940c, with err rpc error: code = PermissionDenied desc = "ExecProcessRequest is blocked by policy: ": unknown
