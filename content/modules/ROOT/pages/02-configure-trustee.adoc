@@ -481,7 +481,7 @@ spec:
   kbsSecretResources: ["kbsres1", "security-policy"]
   tdxConfigSpec:
     kbsTdxConfigMapName: tdx-config
-#  kbsResourcePolicyConfigMapName: resource-policy
+# kbsResourcePolicyConfigMapName: resource-policy
 # kbsAttestationPolicyConfigMapName: attestation-policy
 # kbsServiceType: <service_type>
 EOF
