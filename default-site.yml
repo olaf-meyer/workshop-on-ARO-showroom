@@ -1,7 +1,7 @@
 ---
 site:
   title: Confidential Containers
-  url: https://redhat-scholars.github.io/course-template
+  url: https://www.redhat.com/en/blog/learn-about-confidential-containers
   start_page: modules::index.adoc
 
 content:
