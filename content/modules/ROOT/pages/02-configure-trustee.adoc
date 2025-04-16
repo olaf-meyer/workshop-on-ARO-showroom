@@ -448,7 +448,7 @@ We will add `key1` as a simple string containing the text `Confidential_Secret!`
 ----
 oc create secret generic kbsres1 \
   --from-literal key1=Confidential_Secret! \
-  --from-literal key2=key.bin \
+  --from-file key2=key.bin \
   -n trustee-operator-system
 ----
 
