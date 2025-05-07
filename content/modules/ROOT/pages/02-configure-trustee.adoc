@@ -14,15 +14,13 @@ Create a secure route with edge TLS termination for Trustee. External ingress tr
 oc create route edge --service=kbs-service --port kbs-port \
   -n trustee-operator-system
 ----
-+
-NOTE: Currently, only a route with a valid CA-signed certificate is supported. You cannot use a route with self-signed certificate. In ARO, the above route works well. If you are trying this guide from an Azure self managed cluster, there is the `NodePort` option available, which consists of adding `kbsServiceType: NodePort` under `spec` in the xref:02-configure-trustee.adoc#trustee-kbsconfig[Trustee KbsConfig] (restart trustee deployment), and change `AA_KBC_PARAMS` in xref:02-configure-osc.adoc#pp-cm[peer-pods ConfigMap] to be `cc_kbc::http://your_worker_node_ip_where_trustee_is:kbs_service_nodeport`. This is not a supported approach for production and just useful for trying everything in a single cluster.
 
 . Set the `TRUSTEE_HOST` variable. This variable will be useful later when we set the xref:02-configure-osc.adoc#pp-cm[peer-pods ConfigMap]
 +
 [source,sh,role=execute]
 ----
-TRUSTEE_HOST=$(oc get route -n trustee-operator-system kbs-service \
-  -o jsonpath={.spec.host})
+TRUSTEE_HOST="https://$(oc get route -n trustee-operator-system kbs-service \
+  -o jsonpath={.spec.host})"
 
 echo $TRUSTEE_HOST
 ----
@@ -32,6 +30,21 @@ Example output:
 [source,texinfo,subs="attributes"]
 ----
 kbs-service-trustee-operator-system.apps.rs01nyk5.eastus.aroapp.io
+----
++
+NOTE: Currently, only a route with a valid CA-signed certificate is supported. You cannot use a route with self-signed certificate. In ARO, the above route seems not to work anymore. If you are trying this guide from an Azure self managed cluster, there is the `NodePort` option available, which consists of adding `kbsServiceType: NodePort` under `spec` in the xref:02-configure-trustee.adoc#trustee-kbsconfig[Trustee KbsConfig] (restart trustee deployment), and then set `TRUSTEE_HOST` to `http://your_worker_node_ip_where_trustee_is:kbs_service_nodeport`. Using nodeport means using unsecure http, and therefore also xref:02-configure-osc.adoc#pp-initdat[initdata] has to be configured to support it. This is not a supported approach for production and just useful for trying everything in a single cluster. For the purpose of this workshop, we will enable NodePort.
++
+Get node IP and Kbs service nodeport, and then replace `TRUSTEE_URL` with the `http://ip:port` url:
++
+[source,sh,role=execute]
+----
+nodePort=$(oc -n trustee-operator-system get service kbs-service -o=jsonpath={.spec.ports..nodePort})
+
+nodeIP=$(oc get node -o wide | tail -1 | awk '/worker/{print $6}')
+
+TRUSTEE_URL=http://${nodeIP}:${nodePort}
+
+echo $TRUSTEE_HOST
 ----
 
 [#trustee-secret]
@@ -76,36 +89,45 @@ metadata:
   name: kbs-config-cm
   namespace: trustee-operator-system
 data:
-  kbs-config.json: |
-    {
-      "insecure_http" : true,
-      "sockets": ["0.0.0.0:8080"],
-      "auth_public_key": "/etc/auth-secret/publicKey",
-      "attestation_token_config": {
-        "attestation_token_type": "CoCo"
-      },
-      "repository_config": {
-        "type": "LocalFs",
-        "dir_path": "/opt/confidential-containers/kbs/repository"
-      },
-      "as_config": {
-        "work_dir": "/opt/confidential-containers/attestation-service",
-        "policy_engine": "opa",
-        "attestation_token_broker": "Simple",
-          "attestation_token_config": {
-          "duration_min": 5
-          },
-        "rvps_config": {
-          "store_type": "LocalJson",
-          "store_config": {
-            "file_path": "/opt/confidential-containers/rvps/reference-values/reference-values.json"
-          }
-         }
-      },
-      "policy_engine_config": {
-        "policy_path": "/opt/confidential-containers/opa/policy.rego"
-      }
-    }
+  kbs-config.toml: |
+    [http_server]
+    sockets = ["0.0.0.0:8080"]
+    insecure_http = true
+
+    [admin]
+    insecure_api = true
+    auth_public_key = "/etc/auth-secret/publicKey"
+
+    [attestation_token]
+    insecure_key = true
+    attestation_token_type = "CoCo"
+
+    [attestation_service]
+    type = "coco_as_builtin"
+    work_dir = "/opt/confidential-containers/attestation-service"
+    policy_engine = "opa"
+
+      [attestation_service.attestation_token_broker]
+      type = "Ear"
+      policy_dir = "/opt/confidential-containers/attestation-service/policies"
+
+      [attestation_service.attestation_token_config]
+      duration_min = 5
+
+      [attestation_service.rvps_config]
+      type = "BuiltIn"
+
+        [attestation_service.rvps_config.storage]
+        type = "LocalJson"
+        file_path = "/opt/confidential-containers/rvps/reference-values/reference-values.json"
+
+    [[plugins]]
+    name = "resource"
+    type = "LocalFs"
+    dir_path = "/opt/confidential-containers/kbs/repository"
+
+    [policy_engine]
+    policy_path = "/opt/confidential-containers/opa/policy.rego"
 EOF
 
 cat kbs-configmap.yaml
@@ -481,9 +503,9 @@ spec:
   kbsSecretResources: ["kbsres1", "security-policy"]
   tdxConfigSpec:
     kbsTdxConfigMapName: tdx-config
+  kbsServiceType: NodePort
 # kbsResourcePolicyConfigMapName: resource-policy
 # kbsAttestationPolicyConfigMapName: attestation-policy
-# kbsServiceType: <service_type>
 EOF
 
 cat kbsconfig-cr.yaml

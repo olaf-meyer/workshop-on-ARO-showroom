@@ -8,54 +8,6 @@ To complete this section, it is mandatory to have all ARO credentials at hand de
 
 In order to create the xref:02-configure-osc.adoc#pp-cm[peer-pods configmap], it is necessary to have Trustee xref:01-install-trustee.adoc#twebui[installed] and xref:02-configure-trustee.adoc#trustee-route[configured].
 
-[#pp-secret]
-== Create the peer-pods secret
-The OSC operator must have access to the ARO credentials in order to create VMs.
-
-Currently we are using the azure-credentials secret from the kube-system namespace which has the required permissions to call Azure API to create VM, fetch images, join networks, create image gallery and definition in the ARO managed group.
-
-. Get the necessary credentials.
-+
-[source,sh,role=execute]
-----
-AZURE_CLIENT_ID=$(oc get secret -n kube-system azure-credentials -o jsonpath="{.data.azure_client_id}" |  base64 -d)
-AZURE_CLIENT_SECRET=$(oc get secret -n kube-system azure-credentials -o jsonpath="{.data.azure_client_secret}" |  base64 -d)
-AZURE_TENANT_ID=$(oc get secret -n kube-system azure-credentials -o jsonpath="{.data.azure_tenant_id}" |  base64 -d)
-AZURE_SUBSCRIPTION_ID=$(oc get secret -n kube-system azure-credentials -o jsonpath="{.data.azure_subscription_id}" |  base64 -d)
-
-echo "AZURE_CLIENT_ID: \"$AZURE_CLIENT_ID\""
-echo "AZURE_CLIENT_SECRET: \"$AZURE_CLIENT_SECRET\""
-echo "AZURE_TENANT_ID: \"$AZURE_TENANT_ID\""
-echo "AZURE_SUBSCRIPTION_ID: \"$AZURE_SUBSCRIPTION_ID\""
-echo ""
-----
-
-. Create and apply the `peer-pods-secret.yaml` Secret
-+
-[source,sh,role=execute]
-----
-cat > pp-secret.yaml <<EOF
-apiVersion: v1
-kind: Secret
-metadata:
- name: peer-pods-secret
- namespace: openshift-sandboxed-containers-operator
-type: Opaque
-stringData:
- AZURE_CLIENT_ID: "${AZURE_CLIENT_ID}"
- AZURE_CLIENT_SECRET: "${AZURE_CLIENT_SECRET}"
- AZURE_TENANT_ID: "${AZURE_TENANT_ID}"
- AZURE_SUBSCRIPTION_ID: "${AZURE_SUBSCRIPTION_ID}"
-EOF
-
-cat pp-secret.yaml
-----
-+
-[source,sh,role=execute]
-----
-oc apply -f pp-secret.yaml
-----
-
 [#feature-gate]
 == Enable Confidential Containers feature gate
 
@@ -79,6 +31,77 @@ cat cc-fg.yaml
 [source,sh,role=execute]
 ----
 oc apply -f cc-fg.yaml
+----
+
+[#pp-initdat]
+== Create the initdata policy
+
+The initdata specification provides a flexible way to initialize a CoCo peer pod with sensitive or workload-specific data at runtime, avoiding the need to embed such data in the virtual machine (VM) image. This enhances security by reducing exposure of confidential information and improves flexibility by eliminating custom image builds. For example, initdata can include three configuration settings:
+
+* An X.509 certificate for secure communication.
+* A cryptographic key for authentication.
+* An optional Kata Agent policy.rego file to enforce runtime behavior when overriding the default Kata Agent policy.
+
+We can apply an initdata configuration by using one of the following methods:
+
+* Globally by including it in the peer pods config map, setting a cluster-wide default for all pods.
+* On a specific pod when configuring a pod workload object, allowing customization for individual workloads.
+
+In this section, we will create the initdata that will be set up as global in the configmap.
+This same policy can also be modified and applied to a specific pod by using the `io.katacontainers.config.runtime.cc_init_data:` annotation under `metadata:annotations:` in the pod yaml spec.
+
+In this policy, we will set the Trustee address in the internal CVM components. We will use `TRUSTEE_HOST` defined previously when xref:02-configure-trustee.adoc#trustee-route[configuring the Trustee].
+
+[source,sh,role=execute]
+----
+cat > initdata.toml <<EOF
+algorithm = "sha256"
+version = "0.1.0"
+
+[data]
+"aa.toml" = '''
+[token_configs]
+[token_configs.coco_as]
+url = '${TRUSTEE_HOST}'
+
+[token_configs.kbs]
+url = '${TRUSTEE_HOST}'
+#cert = """
+# <cert here>
+#"""
+'''
+
+"cdh.toml"  = '''
+socket = 'unix:///run/confidential-containers/cdh.sock'
+credentials = []
+
+[kbc]
+name = 'cc_kbc'
+url = '${TRUSTEE_HOST}'
+#kbs_cert = """
+# <cert here>
+#"""
+'''
+
+#"policy.rego" = '''
+# <policy here>
+#'''
+EOF
+
+cat initdata.toml
+----
+
+Note that if `TRUSTEE_HOST` uses HTTPS with a CA-signed certificate (necessary for production environments), the certificate has to be added by uncommenting the block in `cert` under `[token_config.kbs]` and the one in `kbs_cert` under `[kbc]`. Otherwise, like in this demo, we can leave it commented out.
+
+In addition, it is also possible to set a global kata agent policy (by default logs and exec are disabled). For more info on how to set up the agent policy, refer to the xref:03-deploy-workload.adoc#optional-options[optional deployment options]. In order to set the agent policy, uncomment the block `policy.rego` and insert the policy there. In this example, we will leave the default policy as it is.
+
+Let's convert the policy in base64 and store it in the `INITDATA` variable.
+
+[source,sh,role=execute]
+----
+INITDATA=$(base64 -w0 < initdata.toml)
+
+echo $INITDATA
 ----
 
 [#pp-cm]
@@ -114,7 +137,7 @@ echo "ARO_NSG_ID: \"$ARO_NSG_ID\""
 echo ""
 ----
 
-. Create and apply the `peer-pods-configmap.yaml` ConfigMap. Note that at this point you must have already xref:01-install-trustee.adoc#webui[installed Trustee] and got `${TRUSTEE_HOST}`.
+. Create and apply the `peer-pods-configmap.yaml` ConfigMap. Note that at this point you must have already xref:02-configure-osc.adoc#pp-initdat[configured initdata] and got `${INITDATA}`.
 +
 [source,sh,role=execute]
 ----
@@ -137,13 +160,13 @@ data:
   PROXY_TIMEOUT: "5m"
   DISABLECVM: "false"
   ENABLE_SECURE_BOOT: "true"
-  AA_KBC_PARAMS: "cc_kbc::https://${TRUSTEE_HOST}"
+  INITDATA: "${INITDATA}"
 EOF
 
 cat pp-cm.yaml
 ----
 +
-IMPORTANT: Note the `AZURE_INSTANCE_SIZES` field. This field is used to specify additional instance sizes that the operator should support. By default, if not specified all new pod VM will be of type `AZURE_INSTANCE_SIZE`, but if specified in the pod yaml (see xref:03-deploy-worload.adoc#options[here]), it will use one of the types indicated in `AZURE_INSTANCE_SIZES`.
+IMPORTANT: Note the `AZURE_INSTANCE_SIZES` field. This field is used to specify additional instance sizes that the operator should support. By default, if this field is not specified all new pod VM will be of type `AZURE_INSTANCE_SIZE`, but if it is, the operator will pick the smallest instance defined in `AZURE_INSTANCE_SIZES` that satisfies the memory and cpu limits defined in the podspec.
 Azure instance types are explained and listed https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/overview?tabs=breakdownseries%2Cgeneralsizelist%2Ccomputesizelist%2Cmemorysizelist%2Cstoragesizelist%2Cgpusizelist%2Cfpgasizelist%2Chpcsizelist[here, window=blank].
 Because of the quota limitations of this workshop, it is unlikely that it will be possible to deploy instances bigger than `Standard_DC8*`.
 
@@ -160,11 +183,11 @@ NOTE: As you might have noticed, `AZURE_IMAGE_ID` is purposefully left empty. It
 
 [NOTE]
 ====
-If you later update the peer pods config map, you must restart the peerpodconfig-ctrl-caa-daemon daemonset to apply the changes.
+If you later update the peer pods config map, you must restart the osc-caa-ds daemonset to apply the changes.
 After you update the config map, apply the manifest. Then restart the cloud-api-adaptor pods by running the following command:
 [source,sh,role=execute]
 ----
-oc set env ds/peerpodconfig-ctrl-caa-daemon -n openshift-sandboxed-containers-operator REBOOT="$(date)"
+oc set env ds/osc-caa-ds -n openshift-sandboxed-containers-operator REBOOT="$(date)"
 ----
 Keep in mind that restarting the daemonset recreates the peer pods, it does not update the existing pods
 ====
@@ -274,7 +297,7 @@ Wait till the job `STATUS` doesn't change to `Completed`. In this ARO setup, it 
 +
 [source,sh,role=execute]
 ----
-oc get -n openshift-sandboxed-containers-operator ds/peerpodconfig-ctrl-caa-daemon
+oc get -n openshift-sandboxed-containers-operator ds/osc-caa-ds
 ----
 +
 Expected output:
@@ -282,7 +305,7 @@ Expected output:
 [source,texinfo,subs="attributes"]
 ----
 NAME                            DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                      AGE
-peerpodconfig-ctrl-caa-daemon   3         3         3       3            3           node-role.kubernetes.io/kata-oc=   22m
+osc-caa-ds   3         3         3       3            3           node-role.kubernetes.io/kata-oc=   22m
 ----
 
 . Make sure the `RuntimeClass` are created.
@@ -317,9 +340,9 @@ openshift-sandboxed-containers-monitor-z8zh5   1/1     Running     0          30
 osc-podvm-image-creation-fltm8                 0/1     Completed   0          17m
 peer-pods-webhook-65cffdd499-2nh9q             1/1     Running     0          2m59s
 peer-pods-webhook-65cffdd499-8x684             1/1     Running     0          2m59s
-peerpodconfig-ctrl-caa-daemon-hl7fb            1/1     Running     0          2m59s
-peerpodconfig-ctrl-caa-daemon-s6xkk            1/1     Running     0          2m59s
-peerpodconfig-ctrl-caa-daemon-vkfm5            1/1     Running     0          2m59s
+osc-caa-ds-hl7fb            1/1     Running     0          2m59s
+osc-caa-ds-s6xkk            1/1     Running     0          2m59s
+osc-caa-ds-vkfm5            1/1     Running     0          2m59s
 ----
 
 This is it! Now the cluster is ready to run workloads with `kata-remote` `RuntimeClass`!

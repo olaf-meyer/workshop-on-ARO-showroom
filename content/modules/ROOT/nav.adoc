@@ -20,8 +20,8 @@
 ** xref:01-install-osc.adoc#cmdline[Command line]
 
 * xref:02-configure-osc.adoc[4. Configure the OSC operator]
-** xref:02-configure-osc.adoc#pp-secret[Create the peer-pods secret]
 ** xref:02-configure-osc.adoc#feature-gate[Create the feature gate]
+** xref:02-configure-osc.adoc#pp-initdat[Create the initdata policy]
 ** xref:02-configure-osc.adoc#pp-cm[Create the peer-pods configmap]
 ** xref:02-configure-osc.adoc#pp-key[Create the SSH key]
 ** xref:02-configure-osc.adoc#pp-kc[Create the KataConfig]
