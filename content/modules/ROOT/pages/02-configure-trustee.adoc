@@ -264,7 +264,7 @@ Note that `security-policy` will be later used in the xref:02-configure-trustee.
 
 ==== **Provisioning Certificate Caching Service for TDX**
 
-**Purpose of this resource**: If your TEE is **Intel Trust Domain Extensions (TDX)**, meaning the instance size you use or plan to use (it's in `AZURE_INSTANCE_SIZES` list) is Standard_DC**e***, you must configure the Provisioning Certificate Caching Service (PCCS). The PCCS retrieves Provisioning Certification Key (PCK) certificates and caches them in a local database.
+**Purpose of this resource**: If your TEE is **Intel Trust Domain Extensions (TDX)**, meaning the instance size you use or plan to use is Standard_DC**e***, you must configure the Provisioning Certificate Caching Service (PCCS). The PCCS retrieves Provisioning Certification Key (PCK) certificates and caches them in a local database.
 
 In this workshop, we will enable PCCS so the user will be able to deploy TDX instance sizes.
 
