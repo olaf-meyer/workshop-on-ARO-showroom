@@ -10,12 +10,11 @@ asciidoc:
     release-version: master
     page-pagination: true
     aro_console: https://placehoder_openshift_web_console
-    azure_resource_group: placeholder_resource_group
+    azure_resource_group: insert_your_rg_here
     aro_kube_username: kubeadmin
-    aro_kube_password: placehoder_openshift_admin_password
-    aro_sandbox_name: placehoder_aro_sandbox_name
-    guid: my-guid
-    azure_service_principal_id: placeholder_my_client_id
-    azure_service_principal_password: placeholder_my_pw
-    azure_tenant_id: placeholder_my_tenant_id
-    azure_subscription: placeholder_my_subscription
+    aro_kube_password: insert_your_pw_here
+    guid: insert-your-guid-here
+    azure_service_principal_id: insert_your_sp_here
+    azure_service_principal_password: insert_your_sppw_here
+    azure_tenant_id: insert_your_tid_here
+    azure_subscription: insert_your_sub_here
