@@ -504,7 +504,7 @@ If you did the optional steps:
 * For custom resource policy, define `kbsResourcePolicyConfigMapName`.
 * If you are not planning to use TDX, disable the `tdxConfigSpec` section.
 * For custom attestation policy define `kbsAttestationPolicyConfigMapName`.
-* Define `kbsServiceType` if you created a service type other than the default `ClusterIP` service to expose applications within the cluster external traffic. You can specify `NodePort`, `LoadBalancer`, or `ExternalName`.
+* Define `kbsServiceType` if you created a service type other than the default `ClusterIP` service to expose applications within the cluster external traffic. You can specify `NodePort`, `LoadBalancer`, or `ExternalName`. In this workshop, we will enable also `NodePort`.
 
 Once the KbsConfig has been configured, apply it.
 

@@ -38,7 +38,7 @@ oc apply -f cc-fg.yaml
 
 Currently, only a Trustee route with a valid CA-signed certificate is supported. It is not possible to use a route with self-signed certificate. A non-production solution is to use `NodePort`, which is using unsecure http. This is not a supported approach for production and just useful for trying everything in a single cluster. For the purpose of this workshop, we will enable NodePort.
 
-Get node IP and Kbs service nodeport, and then replace `TRUSTEE_URL` with the `http://ip:port` url:
+Get node IP and Kbs service nodeport, and then replace `TRUSTEE_HOST` with the `http://ip:port` url:
 
 [source,sh,role=execute]
 ----
@@ -46,7 +46,7 @@ nodePort=$(oc -n trustee-operator-system get service kbs-service -o=jsonpath={.s
 
 nodeIP=$(oc get node -o wide | tail -1 | awk '/worker/{print $6}')
 
-TRUSTEE_URL=http://${nodeIP}:${nodePort}
+TRUSTEE_HOST="http://${nodeIP}:${nodePort}"
 
 echo $TRUSTEE_HOST
 ----
