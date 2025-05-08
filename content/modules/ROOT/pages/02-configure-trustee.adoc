@@ -32,7 +32,7 @@ Example output:
 kbs-service-trustee-operator-system.apps.rs01nyk5.eastus.aroapp.io
 ----
 +
-NOTE: Currently, only a route with a valid CA-signed certificate is supported. It is not possible to use a route with self-signed certificate. Therefore, in this workshop we will also enable xref:02-configure-osc.adoc#nodeport[NodePort] to enable unsecure http connections. This is not a supported approach for production and just useful for trying everything in a single cluster.
+NOTE: Currently, only a route with a valid CA-signed certificate is supported. It is not possible to use a route with self-signed certificate. In ARO, the route works, but in case this workshop is run in Azure self managed environment, one has to also run xref:02-configure-osc.adoc#nodeport[NodePort] to enable unsecure http connections. This is not a supported approach for production and just useful for trying everything in a single cluster.
 
 [#trustee-secret]
 == Create the Trustee authentication secret

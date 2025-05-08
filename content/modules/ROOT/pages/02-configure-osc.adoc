@@ -34,9 +34,11 @@ oc apply -f cc-fg.yaml
 ----
 
 [#nodeport]
-== Enable NodePort
+== Azure self managed deployment only: Enable NodePort
 
-Currently, only a Trustee route with a valid CA-signed certificate is supported. It is not possible to use a route with self-signed certificate. A non-production solution is to use `NodePort`, which is using unsecure http. This is not a supported approach for production and just useful for trying everything in a single cluster. For the purpose of this workshop, we will enable NodePort.
+IMPORTANT: If you are executing this workshop in ARO, skip this step.
+
+Currently, only a Trustee route with a valid CA-signed certificate is supported. It is not possible to use a route with self-signed certificate, which is what Azure self managed cluster have. A non-production solution is to use `NodePort`, which is using unsecure http. This is not a supported approach for production and just useful for trying everything in a single cluster.
 
 Get node IP and Kbs service nodeport, and then replace `TRUSTEE_HOST` with the `http://ip:port` url:
 
@@ -148,10 +150,28 @@ ARO_WORKER_SUBNET_ID=$(az network vnet subnet list --resource-group $AZURE_RESOU
 
 ARO_NSG_ID=$(az network nsg list --resource-group $ARO_RESOURCE_GROUP --query "[].{Id:id}" --output tsv)
 
+# Necessary otherwise the CoCo pods won't be able to connect with the OCP cluster (OSC and Trustee)
+PEERPOD_NAT_GW=peerpod-nat-gw
+PEERPOD_NAT_GW_IP=peerpod-nat-gw-ip
+
+az network public-ip create -g "${AZURE_RESOURCE_GROUP}" \
+    -n "${PEERPOD_NAT_GW_IP}" -l "${ARO_REGION}" --sku Standard
+
+az network nat gateway create -g "${AZURE_RESOURCE_GROUP}" \
+    -l "${ARO_REGION}" --public-ip-addresses "${PEERPOD_NAT_GW_IP}" \
+    -n "${PEERPOD_NAT_GW}"
+
+az network vnet subnet update --nat-gateway "${PEERPOD_NAT_GW}" \
+    --ids "${ARO_WORKER_SUBNET_ID}"
+
+ARO_NAT_ID=$(az network vnet subnet show --ids "${ARO_WORKER_SUBNET_ID}" \
+    --query "natGateway.id" -o tsv)
+
 echo "ARO_REGION: \"$ARO_REGION\""
 echo "ARO_RESOURCE_GROUP: \"$ARO_RESOURCE_GROUP\""
 echo "ARO_SUBNET_ID: \"$ARO_WORKER_SUBNET_ID\""
 echo "ARO_NSG_ID: \"$ARO_NSG_ID\""
+echo "ARO_NAT_ID: \"$ARO_NAT_ID\""
 echo ""
 ----
 
