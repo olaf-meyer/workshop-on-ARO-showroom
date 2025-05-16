@@ -26,6 +26,33 @@ spec:
 [#optional-options]
 === Optionals
 
+* Add an annotation to the pod-templated object to use a manually defined instance size or an automatic instance size:
++
+[source,yaml,role=execute]
+----
+apiVersion: v1
+kind: <Pod>
+metadata:
+  annotations:
+    io.katacontainers.config.hypervisor.machine_type: Standard_DC8as_v5
+# ...
+----
++
+Note that the `machine_type` must be one of the one specified in `AZURE_INSTANCE_SIZES` in the OSC xref:02-configure-osc.adoc#pp-cm[ConfigMap]. By default, all instance types will be `AZURE_INSTANCE_SIZE`.
+
+* Define the amount of memory available for the workload to use. The workload will run on an automatic instance size based on the amount of memory available.
++
+[source,yaml,role=execute]
+----
+apiVersion: v1
+kind: <Pod>
+metadata:
+  annotations:
+    io.katacontainers.config.hypervisor.default_vcpus: <vcpus>
+    io.katacontainers.config.hypervisor.default_memory: <memory>
+# ...
+----
+
 * Change the initdata policy. As explained in the xref:02-configure-osc.adoc#pp-initdat[initdata] section, it is also possible to change the initdata policy by adding the base64 encoded policy as `io.katacontainers.config.runtime.cc_init_data` under `metadata:annotations` in the podspec.
 
 * Relax the default policy to enable logs and/or exec. A Confidential Container doesn't enable by default logging or exec into the pod, otherwise a malicious actor (oc admin) could be able to enter and see the secrets. For the purpose of this workshop, it is possible to enable logs using an https://github.com/kata-containers/kata-containers/blob/main/docs/how-to/how-to-use-the-kata-agent-policy.md#encode-a-policy-file[alternative Kata policy, window=blank].

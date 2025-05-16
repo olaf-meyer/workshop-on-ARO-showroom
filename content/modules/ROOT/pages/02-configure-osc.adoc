@@ -197,6 +197,7 @@ metadata:
 data:
   CLOUD_PROVIDER: "azure"
   VXLAN_PORT: "9000"
+  AZURE_INSTANCE_SIZES: "Standard_DC8as_v5,Standard_DC8ads_v5, Standard_DC8es_v5, Standard_DC8eds_v5"
   AZURE_INSTANCE_SIZE: "Standard_DC8es_v5"
   AZURE_RESOURCE_GROUP: "${ARO_RESOURCE_GROUP}"
   AZURE_REGION: "${ARO_REGION}"
@@ -212,7 +213,8 @@ EOF
 cat pp-cm.yaml
 ----
 +
-IMPORTANT: Note the `AZURE_INSTANCE_SIZE` field. This field is used to specify the instance size of the CVM that will run the workload.
+IMPORTANT: There is a difference between `AZURE_INSTANCE_SIZE` and `AZURE_INSTANCE_SIZES`. The former is used to define the default instance size, if not specified in the `io.katacontainers.config.hypervisor.machine_type` xref:03-deploy-workload.adoc#optional-options[pod annotation].
+The latter is used as an "allowlist" to restrict the instance types that the pod can actually run. This is especially useful if the OSC setup and pod deployment is done by two different actors, to avoid using extremely expensive instances from being misused.
 Azure instance types are explained and listed https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/overview?tabs=breakdownseries%2Cgeneralsizelist%2Ccomputesizelist%2Cmemorysizelist%2Cstoragesizelist%2Cgpusizelist%2Cfpgasizelist%2Chpcsizelist[here, window=blank].
 Because of the quota limitations of this workshop, it is unlikely that it will be possible to deploy instances bigger than `Standard_DC8*`.
 
