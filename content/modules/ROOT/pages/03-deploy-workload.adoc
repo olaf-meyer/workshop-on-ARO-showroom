@@ -40,7 +40,7 @@ metadata:
 +
 Note that the `machine_type` must be one of the one specified in `AZURE_INSTANCE_SIZES` in the OSC xref:02-configure-osc.adoc#pp-cm[ConfigMap]. By default, all instance types will be `AZURE_INSTANCE_SIZE`.
 
-* Define the amount of memory available for the workload to use. The workload will run on an automatic instance size based on the amount of memory available.
+<!-- * Define the amount of memory available for the workload to use. The workload will run on an automatic instance size based on the amount of memory available.
 +
 [source,yaml,role=execute]
 ----
@@ -51,7 +51,7 @@ metadata:
     io.katacontainers.config.hypervisor.default_vcpus: <vcpus>
     io.katacontainers.config.hypervisor.default_memory: <memory>
 # ...
-----
+---- -->
 
 * Change the initdata policy. As explained in the xref:02-configure-osc.adoc#pp-initdat[initdata] section, it is also possible to change the initdata policy by adding the base64 encoded policy as `io.katacontainers.config.runtime.cc_init_data` under `metadata:annotations` in the podspec.
 
