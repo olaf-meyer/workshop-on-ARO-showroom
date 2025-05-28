@@ -26,7 +26,21 @@ spec:
 [#optional-options]
 === Optionals
 
-* Add an annotation to the pod-templated object to use a manually defined instance size or an automatic instance size:
+* Change the image to be used for the given pod manifest:
++
+[source,yaml,role=execute]
+----
+apiVersion: v1
+kind: <Pod>
+metadata:
+  annotations:
+    io.katacontainers.config.hypervisor.image: /your/custom/image/path/here
+# ...
+----
++
+This overrides `AZURE_IMAGE_ID` in peer-pods configmap, and it's simply a path to the Azure image gallery/definition/version containing the custom image. Note that the image has to be accessible by the Openshift cluster resource group, otherwise it won't be able to pull it.
+
+* Change the instance size to be used for the given pod manifest:
 +
 [source,yaml,role=execute]
 ----
@@ -40,9 +54,9 @@ metadata:
 +
 Note that the `machine_type` must be one of the one specified in `AZURE_INSTANCE_SIZES` in the OSC xref:02-configure-osc.adoc#pp-cm[ConfigMap]. By default, all instance types will be `AZURE_INSTANCE_SIZE`.
 
-* Change the initdata policy. As explained in the xref:02-configure-osc.adoc#pp-initdat[initdata] section, it is also possible to change the initdata policy by adding the base64 encoded policy as `io.katacontainers.config.runtime.cc_init_data` under `metadata:annotations` in the podspec.
+* Change the initdata policy to be used for the given pod manifest. As explained in the xref:02-configure-osc.adoc#pp-initdat[initdata] section, it is also possible to change the initdata policy by adding the base64 encoded policy as `io.katacontainers.config.runtime.cc_init_data` under `metadata:annotations` in the podspec.
 
-* Relax the default policy to enable logs and/or exec. A Confidential Container doesn't enable by default logging or exec into the pod, otherwise a malicious actor (oc admin) could be able to enter and see the secrets. For the purpose of this workshop, it is possible to enable logs using an https://github.com/kata-containers/kata-containers/blob/main/docs/how-to/how-to-use-the-kata-agent-policy.md#encode-a-policy-file[alternative Kata policy, window=blank].
+* Relax the default policy to enable logs and/or exec to be used for the given pod manifest. A Confidential Container doesn't enable by default logging or exec into the pod, otherwise a malicious actor (oc admin) could be able to enter and see the secrets. For the purpose of this workshop, it is possible to enable logs using an https://github.com/kata-containers/kata-containers/blob/main/docs/how-to/how-to-use-the-kata-agent-policy.md#encode-a-policy-file[alternative Kata policy, window=blank].
 +
 A Kata policy is defined as `io.katacontainers.config.agent.policy` under `annotation` in the pod yaml, and it's base64 encoded. It defines what a CoCo pod is allowed to do and not.
 +
