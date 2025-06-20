@@ -177,7 +177,9 @@ oc apply -f rvps-configmap.yaml
 
 ==== **Container image signature verification policy**
 
-**Purpose of this resource**: Sets wether to enforce or not the container image signature verification feature. If enabled, all containers images not signed by the trusted certificate provided in the previous step will not be run.
+**Purpose of this resource**: Sets wether to enforce or not the container image signature verification feature. If enabled, all containers images not signed by the trusted certificate provided in the xref:02-configure-trustee.adoc#trustee-signed-policy[container image verification secret] will not be run.
+
+The Trustee Operator returns this secret to the CoCo CVM components (which will run the CoCo pod) after attestation, to make sure they will perform the intended check. The CVM components will then compare the secret with the actual pod signature to determine whether to run it or not, ensuring that only trusted and authenticated container images are deployed in your environment.
 
 You must create the container image signature verification policy because signature verification is always enabled. If this policy is missing, the pods will not start.
 
@@ -304,9 +306,9 @@ oc apply -f tdx-config.yaml
 [#trustee-signed-policy]
 ==== **Secret for container image signature verification**
 
-**Purpose of this resource**: This secret is only necessary if you are planning to enforce the container image signature policy. It defines which container signature to trust.
+**Purpose of this resource**: This secret is only necessary if you are planning to enforce the container image signature policy. It defines which container signature to trust. In other words, if the container is not signed by a trusted signature, it shouldn't run.
 
-If you use container image signature verification, you must create a secret that contains the public container image signing key. The Trustee Operator uses the secret to verify the signature, ensuring that only trusted and authenticated container images are deployed in your environment.
+If you use container image signature verification, you must create a secret that contains the public container image signing key.
 
 Specify the secret `$CONTAINER_IMAGE_SIGNATURE_TYPE` (for example `img-sig`), the secret `$CONTAINER_IMAGE_SIGNATURE_TAG` (for example `pub-key`), and `$CONTAINER_IMAGE_SIGNATURE_PK`, the public container image signing key.
 
