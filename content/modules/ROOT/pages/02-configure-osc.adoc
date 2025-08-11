@@ -33,97 +33,6 @@ cat cc-fg.yaml
 oc apply -f cc-fg.yaml
 ----
 
-[#nodeport]
-== Azure self managed deployment only: Enable NodePort
-
-IMPORTANT: If you are executing this workshop in ARO, skip this step.
-
-Currently, only a Trustee route with a valid CA-signed certificate is supported. It is not possible to use a route with self-signed certificate, which is what Azure self managed cluster have. A non-production solution is to use `NodePort`, which is using unsecure http. This is not a supported approach for production and just useful for trying everything in a single cluster.
-
-Get node IP and Kbs service nodeport, and then replace `TRUSTEE_HOST` with the `http://ip:port` url:
-
-[source,sh,role=execute]
-----
-nodePort=$(oc -n trustee-operator-system get service kbs-service -o=jsonpath={.spec.ports..nodePort})
-
-nodeIP=$(oc get node -o wide | tail -1 | awk '/worker/{print $6}')
-
-TRUSTEE_HOST="http://${nodeIP}:${nodePort}"
-
-echo $TRUSTEE_HOST
-----
-
-[#pp-initdat]
-== Create the initdata policy
-
-The initdata specification provides a flexible way to initialize a CoCo peer pod with sensitive or workload-specific data at runtime, avoiding the need to embed such data in the virtual machine (VM) image. This enhances security by reducing exposure of confidential information and improves flexibility by eliminating custom image builds. For example, initdata can include three configuration settings:
-
-* An X.509 certificate for secure communication.
-* A cryptographic key for authentication.
-* An optional Kata Agent policy.rego file to enforce runtime behavior when overriding the default Kata Agent policy.
-
-We can apply an initdata configuration by using one of the following methods:
-
-* Globally by including it in the peer pods config map, setting a cluster-wide default for all pods.
-* On a specific pod when configuring a pod workload object, allowing customization for individual workloads.
-
-In this section, we will create the initdata that will be set up as global in the configmap.
-This same policy can also be modified and applied to a specific pod by using the `io.katacontainers.config.runtime.cc_init_data:` annotation under `metadata:annotations:` in the pod yaml spec.
-
-In this policy, we will set the Trustee address in the internal CVM components. We will use `TRUSTEE_HOST` defined previously when xref:02-configure-trustee.adoc#trustee-route[configuring the Trustee].
-
-[source,sh,role=execute]
-----
-cat > initdata.toml <<EOF
-algorithm = "sha256"
-version = "0.1.0"
-
-[data]
-"aa.toml" = '''
-[token_configs]
-[token_configs.coco_as]
-url = '${TRUSTEE_HOST}'
-
-[token_configs.kbs]
-url = '${TRUSTEE_HOST}'
-#cert = """
-# <cert here>
-#"""
-'''
-
-"cdh.toml"  = '''
-socket = 'unix:///run/confidential-containers/cdh.sock'
-credentials = []
-
-[kbc]
-name = 'cc_kbc'
-url = '${TRUSTEE_HOST}'
-#kbs_cert = """
-# <cert here>
-#"""
-'''
-
-#"policy.rego" = '''
-# <policy here>
-#'''
-EOF
-
-cat initdata.toml
-----
-
-Note that if `TRUSTEE_HOST` uses HTTPS with a CA-signed certificate (necessary for production environments), the certificate has to be added by uncommenting the block in `cert` under `[token_config.kbs]` and the one in `kbs_cert` under `[kbc]`. Otherwise, like in this demo, we can leave it commented out.
-
-In addition, it is also possible to set a global kata agent policy (by default logs and exec are disabled). For more info on how to set up the agent policy, refer to the xref:03-deploy-workload.adoc#optional-options[optional deployment options]. In order to set the agent policy, uncomment the block `policy.rego` and insert the policy there. In this example, we will leave the default policy as it is.
-
-Let's convert the policy in base64 and store it in the `INITDATA` variable.
-
-[source,sh,role=execute]
-----
-INITDATA=$(base64 -w0 < initdata.toml)
-
-echo $INITDATA
-----
-
 [#pp-cm]
 == Create the peer-pods configmap
 
@@ -184,7 +93,7 @@ echo "ARO_NAT_ID: \"$ARO_NAT_ID\""
 echo ""
 ----
 
-. Create and apply the `peer-pods-configmap.yaml` ConfigMap. Note that at this point you must have already xref:02-configure-osc.adoc#pp-initdat[configured initdata] and got `${INITDATA}`.
+. Create and apply the `peer-pods-configmap.yaml` ConfigMap. Note that at this point you must have already xref:02-configure-trustee.adoc#trustee-initdata[configured initdata] and got `${INITDATA}`.
 +
 [source,sh,role=execute]
 ----
@@ -203,31 +112,45 @@ data:
   AZURE_REGION: "${ARO_REGION}"
   AZURE_SUBNET_ID: "${ARO_WORKER_SUBNET_ID}"
   AZURE_NSG_ID: "${ARO_NSG_ID}"
-  AZURE_IMAGE_ID: ""
   PROXY_TIMEOUT: "5m"
   DISABLECVM: "false"
-  ENABLE_SECURE_BOOT: "true"
   INITDATA: "${INITDATA}"
+  PEERPODS_LIMIT_PER_NODE: "10"
+  TAGS: "key1=value1,key2=value2"
+  ROOT_VOLUME_SIZE: "6"
+  AZURE_IMAGE_ID: ""
 EOF
 
 cat pp-cm.yaml
 ----
 +
-IMPORTANT: Notice that there is a difference between `AZURE_INSTANCE_SIZE` and `AZURE_INSTANCE_SIZES`. The former is used to define the default instance size, if not specified in the `io.katacontainers.config.hypervisor.machine_type` xref:03-deploy-workload.adoc#optional-options[pod annotation].
-The latter is used as an "allowlist" to restrict the instance types that the pod can actually run. This is especially useful if the OSC setup and pod deployment is done by two different actors, to avoid using extremely expensive instances from being misused.
-Azure instance types are explained and listed https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/overview?tabs=breakdownseries%2Cgeneralsizelist%2Ccomputesizelist%2Cmemorysizelist%2Cstoragesizelist%2Cgpusizelist%2Cfpgasizelist%2Chpcsizelist[here, window=blank].
-Because of the quota limitations of this workshop, it is unlikely that it will be possible to deploy instances bigger than `Standard_DC8*`.
-
-It is also worth pointing the azure terminology for instances: the pattern is usually `Standard_X{C}{num_cpus}{a or e}xx_vx` where `C` stands for **Confidential**, `a` for CPUs using **AMD SEV/SNP** technology, and `e` for CPUs using **Intel TDX** technology. Therefore `Standard_DC8_es_v5` is a confidential instance with 8 Intel CPUs using TDX to provide data in use confidentiality.
-
+Explanation:
++
+.. `AZURE_INSTANCE_SIZE`: default instance size, if not specified in the `io.katacontainers.config.hypervisor.machine_type` xref:03-deploy-workload.adoc#optional-options[pod annotation].
++
+Note the azure terminology for instances: the pattern is usually `Standard_X{C}{num_cpus}{a or e}xx_vx` where `C` stands for **Confidential**, `a` for CPUs using **AMD SEV/SNP** technology, and `e` for CPUs using **Intel TDX** technology. Therefore `Standard_DC8_es_v5` is a confidential instance with 8 Intel CPUs using TDX to provide data in use confidentiality.
++
 For this example, we are going to default the instance deployment AMD cpus, because they are available in all regions. If you want to deploy a TDX instance, check the catalog region availability (usually `northeurope` or `westeurope` are a good choice) and deploy a new workshop in that region.
+.. `AZURE_INSTANCE_SIZES`: this is an "allowlist" to restrict the instance types that the pod can actually run. It is especially useful if the OSC setup and pod deployment is done by two different actors, to avoid using extremely expensive instances from being misused.
++
+Azure instance types are explained and listed https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/overview?tabs=breakdownseries%2Cgeneralsizelist%2Ccomputesizelist%2Cmemorysizelist%2Cstoragesizelist%2Cgpusizelist%2Cfpgasizelist%2Chpcsizelist[here, window=blank].
++
+Because of the quota limitations of this workshop, it is unlikely that it will be possible to deploy instances bigger than `Standard_DC8*`.
+.. `PEERPODS_LIMIT_PER_NODE`: Specify the maximum number of peer pods that can be created per node. The default value is `10`.
+.. `TAGS`: You can configure custom tags as key:value pairs for pod VM instances to track peer pod costs or to identify peer pods in different clusters.
+.. `ROOT_VOLUME_SIZE`: Optional: Specify the root volume size in gigabytes for the pod VM. The default and minimum size is 6 GB. Increase this value for pods with larger container images. This volume is **encrypted** and created at boot time. It will contain all data that the CoCo workload will store on disk.
+.. `AZURE_IMAGE_ID`: this is purposefully left empty. It will be filled in automatically by a Job created by the operator later. Red Hat builds and ships a https://www.redhat.com/en/blog/deploy-sensitive-workloads-with-openshift-confidential-containers[default image] which already contains all the necessary CoCo components, plus the following security features:
++
+* Disk integrity protection: the root disk is integrity protected, meaning nobody is able to mount it offline and inject files inside.
++
+* Data volume encryption: all data stored by the CoCo workload is stored in a separate, encrypted container.
++
+* Sealed secrets support: A sealed secret is an encapsulated secret available only within a TEE after verifying the integrity of the TEE environment.
 
 [source,sh,role=execute]
 ----
 oc apply -f pp-cm.yaml
 ----
-
-NOTE: As you might have noticed, `AZURE_IMAGE_ID` is purposefully left empty. It will be filled in automatically by a Job created by the operator later.
 
 [NOTE]
 ====
@@ -385,6 +308,7 @@ controller-manager-5dd87698b7-9cqbn            2/2     Running     0          17
 openshift-sandboxed-containers-monitor-m9ffw   1/1     Running     0          30m
 openshift-sandboxed-containers-monitor-sdlz4   1/1     Running     0          30m
 openshift-sandboxed-containers-monitor-z8zh5   1/1     Running     0          30m
+operator-metrics-server-857fb654c4-z24f4       1/1     Running     0          20m
 osc-podvm-image-creation-fltm8                 0/1     Completed   0          17m
 peer-pods-webhook-65cffdd499-2nh9q             1/1     Running     0          2m59s
 peer-pods-webhook-65cffdd499-8x684             1/1     Running     0          2m59s

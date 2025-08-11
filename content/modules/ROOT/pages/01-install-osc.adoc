@@ -120,7 +120,6 @@ spec:
   name: sandboxed-containers-operator
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: sandboxed-containers-operator.v1.9.0
 EOF
 ----
 +
@@ -142,7 +141,7 @@ oc get csv -n openshift-sandboxed-containers-operator
 [source,texinfo,subs="attributes"]
 ----
 NAME                             DISPLAY                                  VERSION             REPLACES                   PHASE
-openshift-sandboxed-containers   openshift-sandboxed-containers-operator  1.9.0                                          Succeeded
+openshift-sandboxed-containers   openshift-sandboxed-containers-operator  1.10.1                                          Succeeded
 ----
 
 [#scripts]
@@ -178,7 +177,6 @@ spec:
   name: sandboxed-containers-operator
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: sandboxed-containers-operator.v1.9.0
 EOF
 ----
 

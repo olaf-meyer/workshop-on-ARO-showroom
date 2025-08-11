@@ -8,9 +8,13 @@
 ** xref:02-configure-trustee.adoc#trustee-route[Create the route]
 ** xref:02-configure-trustee.adoc#trustee-secret[Create the Trustee authentication secret]
 ** xref:02-configure-trustee.adoc#trustee-cm[Create Trustee ConfigMap]
+** xref:02-configure-trustee.adoc#trustee-initdata[Create the initdata policy]
 ** xref:02-configure-trustee.adoc#trustee-conf[Configure Trustee]
-*** xref:02-configure-trustee.adoc#trustee-mandatory-config[Minimal settings (workshop)]
-*** xref:02-configure-trustee.adoc#trustee-optional-config[Optional configurations]
+*** xref:02-configure-trustee.adoc#trustee-refval[Reference values]
+*** xref:02-configure-trustee.adoc#trustee-ap[Attestation policy]
+*** xref:02-configure-trustee.adoc#trustee-tdx[TDX ConfigMap]
+*** xref:02-configure-trustee.adoc#trustee-cisvp[Container image signature verification policy]
+*** xref:02-configure-trustee.adoc#trustee-rap[Resource access policy]
 ** xref:02-configure-trustee.adoc#trustee-key[Add a secret to Trustee]
 ** xref:02-configure-trustee.adoc#trustee-kbsconfig[Create the KbsConfig custom resource]
 
@@ -21,7 +25,6 @@
 
 * xref:02-configure-osc.adoc[4. Configure the OSC operator]
 ** xref:02-configure-osc.adoc#feature-gate[Create the feature gate]
-** xref:02-configure-osc.adoc#pp-initdat[Create the initdata policy]
 ** xref:02-configure-osc.adoc#pp-cm[Create the peer-pods configmap]
 ** xref:02-configure-osc.adoc#pp-key[Create the SSH key]
 ** xref:02-configure-osc.adoc#pp-kc[Create the KataConfig]
@@ -31,7 +34,7 @@
 ** xref:03-deploy-workload.adoc#example[Hello-openshift example]
 ** xref:03-deploy-workload.adoc#verify[Verify the pod is in a VM]
 ** xref:03-deploy-workload.adoc#verify-security[Verify the CoCo pod security restrictions]
-** xref:03-deploy-workload.adoc#example-att[Attestation example]
+** xref:03-deploy-workload.adoc#verify-security[Retrieve a secret from Trustee (attestation)]
 ** xref:03-deploy-workload.adoc#destroy[Destroy the hello-openshift pod]
 
 * xref:04-conclusion.adoc[6. Conclusion and what's next]

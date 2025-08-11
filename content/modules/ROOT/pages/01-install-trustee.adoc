@@ -129,7 +129,6 @@ spec:
   name: trustee-operator
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: trustee-operator.v0.3.0
 EOF
 ----
 +
@@ -151,7 +150,7 @@ oc get csv -n trustee-operator-system
 [source,texinfo,subs="attributes"]
 ----
 NAME                      DISPLAY                            VERSION   REPLACES   PHASE
-trustee-operator.v0.3.0   confidential compute attestation   0.3.0                Succeeded
+trustee-operator.v0.4.1   confidential compute attestation   0.4.1                Succeeded
 ----
 
 [#scripts]
@@ -187,7 +186,6 @@ spec:
   name: trustee-operator
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: trustee-operator.v0.3.0
 EOF
 ----
 
