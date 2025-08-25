@@ -2,40 +2,56 @@
 
 Now that the Trustee operator is installed, we need to set it up.
 
+Reminder: You can assume that **everything running in the trustee-operator-sysem namespace should run in a trusted, separate environment**. Because of the limitations of this ARO workshop, it is not possible to set up two clusters.
+
 [#trustee-route]
 == Create a route for Trustee
 
-Create a secure route with edge TLS termination for Trustee. External ingress traffic reaches the router pods as HTTPS and passes on to the Trustee pods as HTTP.
+Create a secure route with `passthrough` TLS termination for Trustee. External ingress traffic does not get decrypted by the router but forwarded directly to Trustee pod.
+It is also possible to create an `edge` route, but then the connection between Trustee and OCP router will be in plain text (http). In this workshop, we will use `passthrough`.
 
-Create a route and set the `TRUSTEE_HOST` variable. This variable will be useful later when we set the xref:02-configure-osc.adoc#pp-cm[peer-pods ConfigMap]. In this workshop, we will create an unprotecred `http` route. This is not for production usage.
+Create the self-signed certificates and upload them in the Trustee namespace:
+[source,sh,role=execute]
+----
+DOMAIN=$(oc get ingress.config/cluster -o jsonpath='{.spec.domain}')
+NS=trustee-operator-system
+ROUTE_NAME=kbs-service
 
-NOTE: Currently, only a route with a valid CA-signed certificate is supported. It is not possible to use a route with self-signed certificate. Therefore, we will create an `http` unsecure route instead of `https` and enable `insecure_http` in the xref:02-configure-trustee.adoc#trustee-cm[Trustee config] to allow such connection. This is not a supported approach for production and just useful for trying everything in a single cluster.
+ROUTE="${ROUTE_NAME}-${NS}.${DOMAIN}"
+
+openssl req -x509 -nodes -days 365 \
+  -newkey rsa:2048 \
+  -keyout tls.key \
+  -out tls.crt \
+  -subj "/CN=myapp.example.com/O=MyOrg"
+
+openssl genrsa -out tls.key 2048
+
+openssl req -new -x509 -key tls.key -out tls.crt -days 365 \
+  -subj "/CN=myapp.local/O=MyOrg" \
+  -addext "subjectAltName=DNS:${ROUTE}"
+
+oc create secret generic kbs-https-certificate --from-file=tls.crt -n trustee-operator-system
+
+oc create secret generic kbs-https-key --from-file=tls.key -n trustee-operator-system
+----
+
+Store the `tls.crt` content in the `TRUSTEE_CERT` variable. This will be helpful later when configuring the xref:02-configure-trustee.adoc#trustee-ip[initdata]
 
 [source,sh,role=execute]
 ----
-# Workshop setup
-HTTP="http://"
-oc apply -f-<<EOF
----
-kind: Route
-apiVersion: route.openshift.io/v1
-metadata:
-  namespace: trustee-operator-system
-  name: kbs-service
-spec:
-  to:
-    kind: Service
-    name: kbs-service
-    weight: 100
-  port:
-      targetPort: kbs-port
-  wildcardPolicy: None
----
-EOF
+TRUSTEE_CERT=$(cat tls.crt)
+----
 
-# Production setup
-# HTTP="https://"
-# oc create route edge --service=kbs-service --port kbs-port -n trustee-operator-system
+Create a route and set the `TRUSTEE_HOST` variable. This variable will be useful later when we set the xref:02-configure-osc.adoc#pp-cm[peer-pods ConfigMap].
+
+[source,sh,role=execute]
+----
+HTTP="https://"
+oc create route passthrough trustee-route \
+  --service=kbs-service \
+  --port=kbs-port \
+  -n trustee-operator-system
 
 TRUSTEE_ROUTE="$(oc get route -n trustee-operator-system kbs-service \
   -o jsonpath={.spec.host})"
@@ -97,7 +113,9 @@ data:
   kbs-config.toml: |
     [http_server]
     sockets = ["0.0.0.0:8080"]
-    insecure_http = true
+    insecure_http = false
+    private_key = "/etc/https-key/tls.key"
+    certificate = "/etc/https-cert/tls.crt"
 
     [admin]
     insecure_api = true
@@ -138,14 +156,12 @@ EOF
 cat kbs-configmap.yaml
 ----
 
-IMPORTANT: In this example, `insicure_http` is enabled. This is to allow the test `http` route set up above.
-
 [source,sh,role=execute]
 ----
 oc apply -f kbs-configmap.yaml
 ----
 
-[#trustee-initdata]
+[#trustee-trustee-]
 == The initdata policy
 
 === About initdata
@@ -194,9 +210,9 @@ url = "${TRUSTEE_HOST}"
 
 [token_configs.kbs]
 url = "${TRUSTEE_HOST}"
-#cert = """
-# <cert here>
-#"""
+cert = """
+${TRUSTEE_CERT}
+"""
 '''
 
 "cdh.toml"  = '''
@@ -206,9 +222,9 @@ credentials = []
 [kbc]
 name = "cc_kbc"
 url = "${TRUSTEE_HOST}"
-#kbs_cert = """
-# <cert here>
-#"""
+kbs_cert = """
+${TRUSTEE_CERT}
+"""
 '''
 
 "policy.rego" = '''
@@ -276,8 +292,6 @@ EOF
 
 cat initdata.toml
 ----
-
-Note that if `TRUSTEE_HOST` uses HTTPS with a CA-signed certificate (necessary for production environments), the certificate has to be added by uncommenting the block in `cert` under `[token_config.kbs]` and the one in `kbs_cert` under `[kbc]`. Otherwise, like in this demo, we can leave it commented out.
 
 [#trustee-pr]
 === A note on `policy.rego`
@@ -724,6 +738,8 @@ spec:
   kbsSecretResources: ["kbsres1", "security-policy"]
   kbsResourcePolicyConfigMapName: resource-policy
   kbsAttestationPolicyConfigMapName: attestation-policy
+  kbsHttpsKeySecretName: kbs-https-key
+  kbsHttpsCertSecretName: kbs-https-certificate
   tdxConfigSpec:
     kbsTdxConfigMapName: tdx-config
   kbsServiceType: NodePort
@@ -777,10 +793,14 @@ oc logs -n trustee-operator-system $POD_NAME
 Expected output:
 [source,texinfo,subs="attributes"]
 ----
-[2024-05-30T13:44:24Z INFO  kbs] Using config file /etc/kbs-config/kbs-config.json
-[2024-05-30T13:44:24Z WARN  attestation_service::rvps] No RVPS address provided and will launch a built-in rvps
-[2024-05-30T13:44:24Z INFO  attestation_service::token::simple] No Token Signer key in config file, create an ephemeral key and without CA pubkey cert
-[2024-05-30T13:44:24Z INFO  api_server] Starting HTTPS server at [0.0.0.0:8080]
-[2024-05-30T13:44:24Z INFO  actix_server::builder] starting 4 workers
-[2024-05-30T13:44:24Z INFO  actix_server::server] Tokio runtime found; starting in existing Tokio runtime
+[2025-08-25T12:56:21Z INFO kbs] Using config file /etc/kbs-config/kbs-config.toml
+[2025-08-25T12:56:21Z WARN kbs::admin] insecure admin APIs are enabled
+[2025-08-25T12:56:21Z INFO attestation_service::rvps] launch a built-in RVPS.
+[2025-08-25T12:56:21Z WARN attestation_service::policy_engine::opa] Default policy file is already populated. Existing policy file will be used.
+[2025-08-25T12:56:21Z INFO attestation_service::token::ear_broker] Loading default AS policy "ear_default_policy.rego"
+[2025-08-25T12:56:21Z INFO attestation_service::token::ear_broker] No Token Signer key in config file, create an ephemeral key and without CA pubkey cert
+[2025-08-25T12:56:21Z INFO kbs::api_server] Starting HTTPS server at [0.0.0.0:8080]
+[2025-08-25T12:56:21Z INFO actix_server::builder] starting 64 workers
+[2025-08-25T12:56:21Z INFO actix_server::server] Actix runtime found; starting in Actix runtime
+[2025-08-25T12:56:21Z INFO actix_server::server] starting service: "actix-web-service-0.0.0.0:8080", workers: 64, listening on: 0.0.0.0:8080
 ----

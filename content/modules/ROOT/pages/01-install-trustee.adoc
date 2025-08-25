@@ -30,6 +30,8 @@ In other words, the workflow is the following:
 IMPORTANT: In this workshop, we will install Trustee in the **same cluster** that hosts OSC and therefore Confidential Containers. **This is not a suitable solution for production environments.**
 Because the Trustee operator contains the refernce values and secrets that are necessary to enstablish the if a Confidential Container is running in a truly safe environment, it should be installed in a separate cluster running in a trusted environment (on prem, for example). Because of the limitations of this ARO workshop, it is not possible to set up two clusters.
 
+You can assume that **everything running in the trustee-operator-sysem namespace should run in a trusted, separate environment**.
+
 Let's start with installing Trustee and setting it up. In CoCo, connecting Trustee with OSC is mandatory because as we will see later, before even booting a container OSC asks Trustee to verify the container image signature (even if the signature verification is in permissive mode in Trustee). Therefore it is imperative that Trustee is up and running before OSC is fully configured. We will then install OSC and test our first Confidential Container!
 
 There are two ways to install the Trustee operator:
