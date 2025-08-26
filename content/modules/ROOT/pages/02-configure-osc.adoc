@@ -15,6 +15,9 @@ Create and apply `cc-fg.yaml` ConfigMap
 
 [source,sh,role=execute]
 ----
+mkdir -p ~/osc
+cd ~/osc
+
 cat > cc-fg.yaml <<EOF
 apiVersion: v1
 kind: ConfigMap
@@ -25,6 +28,7 @@ data:
   confidential: "true"
 EOF
 
+clear
 cat cc-fg.yaml
 ----
 
@@ -43,8 +47,6 @@ Follow the comments in the code if this workshop is being run in an Azure self m
 +
 [source,sh,role=execute]
 ----
-echo ""
-
 # Get the ARO created RG
 ARO_RESOURCE_GROUP=$(oc get infrastructure/cluster -o jsonpath='{.status.platformStatus.azure.resourceGroupName}')
 
@@ -85,12 +87,12 @@ az network vnet subnet update --nat-gateway "${PEERPOD_NAT_GW}" \
 ARO_NAT_ID=$(az network vnet subnet show --ids "${ARO_WORKER_SUBNET_ID}" \
     --query "natGateway.id" -o tsv)
 
+clear
 echo "ARO_REGION: \"$ARO_REGION\""
 echo "ARO_RESOURCE_GROUP: \"$ARO_RESOURCE_GROUP\""
 echo "ARO_SUBNET_ID: \"$ARO_WORKER_SUBNET_ID\""
 echo "ARO_NSG_ID: \"$ARO_NSG_ID\""
 echo "ARO_NAT_ID: \"$ARO_NAT_ID\""
-echo ""
 ----
 
 . Create and apply the `peer-pods-configmap.yaml` ConfigMap. Note that at this point you must have already xref:02-configure-trustee.adoc#trustee-initdata[configured initdata] and got `${INITDATA}`.
@@ -121,6 +123,7 @@ data:
   AZURE_IMAGE_ID: ""
 EOF
 
+clear
 cat pp-cm.yaml
 ----
 +
@@ -225,6 +228,7 @@ spec:
 #      <label_key>: '<label_value>'  # Fill with your node labels
 EOF
 
+clear
 cat kataconfig.yaml
 ----
 +
@@ -253,6 +257,7 @@ kata-oc   rendered-kata-oc-894630a1c9cdf3ebef8bd98c72e26608   True      False   
 +
 [source,sh,role=execute]
 ----
+clear
 oc get configmap peer-pods-cm -n openshift-sandboxed-containers-operator -o yaml
 ----
 +

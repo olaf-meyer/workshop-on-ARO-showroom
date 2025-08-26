@@ -19,6 +19,9 @@ ROUTE_NAME=kbs-service
 
 ROUTE="${ROUTE_NAME}-${NS}.${DOMAIN}"
 
+mkdir -p trustee
+cd trustee
+
 openssl req -x509 -nodes -days 365 \
   -newkey rsa:2048 \
   -keyout tls.key \
@@ -34,6 +37,11 @@ openssl req -new -x509 -key tls.key -out tls.crt -days 365 \
 oc create secret generic kbs-https-certificate --from-file=tls.crt -n trustee-operator-system
 
 oc create secret generic kbs-https-key --from-file=tls.key -n trustee-operator-system
+
+clear
+echo "ROUTE: $ROUTE"
+echo ""
+oc get secrets -n trustee-operator-system | grep kbs-https
 ----
 
 Store the `tls.crt` content in the `TRUSTEE_CERT` variable. This will be helpful later when configuring the xref:02-configure-trustee.adoc#trustee-ip[initdata]
@@ -41,6 +49,8 @@ Store the `tls.crt` content in the `TRUSTEE_CERT` variable. This will be helpful
 [source,sh,role=execute]
 ----
 TRUSTEE_CERT=$(cat tls.crt)
+
+echo "$TRUSTEE_CERT"
 ----
 
 Create a route and set the `TRUSTEE_HOST` variable. This variable will be useful later when we set the xref:02-configure-osc.adoc#pp-cm[peer-pods ConfigMap].
@@ -48,7 +58,7 @@ Create a route and set the `TRUSTEE_HOST` variable. This variable will be useful
 [source,sh,role=execute]
 ----
 HTTP="https://"
-oc create route passthrough trustee-route \
+oc create route passthrough kbs-service \
   --service=kbs-service \
   --port=kbs-port \
   -n trustee-operator-system
@@ -65,7 +75,7 @@ Example output:
 
 [source,texinfo,subs="attributes"]
 ----
-http://kbs-service-trustee-operator-system.apps.rs01nyk5.eastus.aroapp.io
+https://kbs-service-trustee-operator-system.apps.rs01nyk5.eastus.aroapp.io
 ----
 
 [#trustee-secret]
@@ -75,25 +85,15 @@ http://kbs-service-trustee-operator-system.apps.rs01nyk5.eastus.aroapp.io
 +
 [source,sh,role=execute]
 ----
-mkdir trustee
-cd trustee
 openssl genpkey -algorithm ed25519 > privateKey
 openssl pkey -in privateKey -pubout -out publicKey
-cd -
 ----
 
 . Create a secret with the public key.
 +
 [source,sh,role=execute]
 ----
-oc create secret generic kbs-auth-public-key --from-file=./trustee/publicKey -n trustee-operator-system
-----
-
-. Check that the newly created secret exists.
-+
-[source,sh,role=execute]
-----
-oc get secret -n trustee-operator-system
+oc create secret generic kbs-auth-public-key --from-file=./publicKey -n trustee-operator-system
 ----
 
 [#trustee-cm]
@@ -153,6 +153,7 @@ data:
     policy_path = "/opt/confidential-containers/opa/policy.rego"
 EOF
 
+clear
 cat kbs-configmap.yaml
 ----
 
@@ -290,6 +291,7 @@ policy_data := {
 '''
 EOF
 
+clear
 cat initdata.toml
 ----
 
@@ -313,7 +315,7 @@ Let's convert the policy in base64 and store it in the `INITDATA` variable.
 [source,sh,role=execute]
 ----
 INITDATA=$(cat initdata.toml | gzip | base64 -w0)
-
+echo ""
 echo $INITDATA
 ----
 
@@ -322,12 +324,10 @@ Now, let's calculate the expected value of PCR8, which will be given in the refe
 [source,sh,role=execute]
 ----
 initial_pcr=0000000000000000000000000000000000000000000000000000000000000000
-
 hash=$(sha256sum initdata.toml | cut -d' ' -f1)
-
 PCR8_HASH=$(echo -n "$initial_pcr$hash" | xxd -r -p | sha256sum | cut -d' ' -f1)
-
-echo $PCR8_HASH
+echo ""
+echo "PCR 8:" $PCR8_HASH
 ----
 
 [#trustee-conf]
@@ -417,6 +417,7 @@ data:
     ]
 EOF
 
+clear
 cat rvps-configmap.yaml
 ----
 
@@ -492,6 +493,7 @@ data:
     }
 EOF
 
+clear
 cat attestation-policy.yaml
 ----
 
@@ -524,6 +526,7 @@ data:
     }
 EOF
 
+clear
 cat tdx-config.yaml
 ----
 
@@ -577,6 +580,7 @@ cat > security-policy-config.json <<EOF
 }
 EOF
 
+clear
 cat security-policy-config.json
 ----
 
@@ -645,6 +649,7 @@ cat > security-policy-config.json <<EOF
 }
 EOF
 
+clear
 cat security-policy-config.json
 ----
 
@@ -674,6 +679,7 @@ data:
     }
 EOF
 
+clear
 cat resourcepolicy-configmap.yaml
 ----
 
@@ -693,7 +699,7 @@ Populate Trustee with secret(s) that are then managed by the above policies and 
 
 Define secret name and values. In this example, the `kbsres1` secret has two entries (`key1`, `key2`), which the clients retrieve. You can add additional secrets according to your requirements by using the same format.
 
-Create first the key:
+Create the key first:
 [source,sh,role=execute]
 ----
 openssl rand 128 > key.bin
@@ -742,9 +748,10 @@ spec:
   kbsHttpsCertSecretName: kbs-https-certificate
   tdxConfigSpec:
     kbsTdxConfigMapName: tdx-config
-  kbsServiceType: NodePort
+  #kbsServiceType: NodePort
 EOF
 
+clear
 cat kbsconfig-cr.yaml
 ----
 
@@ -752,7 +759,7 @@ If you did the optional steps:
 
 * For enforced container image signature verification, extend `kbsSecretResources` list to also have the value of `$CONTAINER_IMAGE_SIGNATURE_TYPE`.
 * If you are not planning to use TDX, disable the `tdxConfigSpec` section.
-* Define `kbsServiceType` if you created a service type other than the default `ClusterIP` service to expose applications within the cluster external traffic. You can specify `NodePort`, `LoadBalancer`, or `ExternalName`. In this workshop, we will enable also `NodePort`.
+* Uncomment `kbsServiceType` if you created a service type other than the default `ClusterIP` service to expose applications within the cluster external traffic. You can specify `NodePort`, `LoadBalancer`, or `ExternalName`.
 
 Once the KbsConfig has been configured, apply it.
 
@@ -786,7 +793,7 @@ trustee-operator-controller-manager-5fbd44cd97-55dlh   2/2     Running   0      
 [source,sh,role=execute]
 ----
 POD_NAME=$(oc get pods -l app=kbs -o jsonpath='{.items[0].metadata.name}' -n trustee-operator-system)
-
+clear
 oc logs -n trustee-operator-system $POD_NAME
 ----
 +

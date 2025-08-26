@@ -116,6 +116,7 @@ spec:
     - port: 8888
 EOF
 
+clear
 cat sample-openshift.yaml
 ----
 +
