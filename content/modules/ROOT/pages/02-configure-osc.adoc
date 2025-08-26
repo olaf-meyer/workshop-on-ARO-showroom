@@ -257,18 +257,17 @@ kata-oc   rendered-kata-oc-894630a1c9cdf3ebef8bd98c72e26608   True      False   
 +
 [source,sh,role=execute]
 ----
-clear
-oc get configmap peer-pods-cm -n openshift-sandboxed-containers-operator -o yaml
+oc get configmap peer-pods-cm -n openshift-sandboxed-containers-operator -o yaml | grep -m 1 AZURE_IMAGE_ID
 ----
 +
 If `data: AZURE_IMAGE_ID:` is still empty, check the job:
 +
 [source,sh,role=execute]
 ----
-watch oc get pods -n openshift-sandboxed-containers-operator
+watch oc get jobs -n openshift-sandboxed-containers-operator
 ----
 +
-Wait till the job `STATUS` doesn't change to `Completed`. In this ARO setup, it should take around 15 minutes.
+Wait till the job `COMPLETIONS` doesn't change to `1/1`. In this ARO setup, it should take around 20 minutes.
 
 
 . Make sure that the required daemonset is created.
