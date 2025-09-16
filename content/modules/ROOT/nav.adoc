@@ -5,6 +5,7 @@
 ** xref:01-install-trustee.adoc#tcmdline[Command line]
 
 * xref:02-configure-trustee.adoc[2. Configure the Trustee operator]
+** xref:02-configure-trustee.adoc#trustee-keys[Create the required keys]
 ** xref:02-configure-trustee.adoc#trustee-route[Create the route]
 ** xref:02-configure-trustee.adoc#trustee-secret[Create the Trustee authentication secret]
 ** xref:02-configure-trustee.adoc#trustee-cm[Create Trustee ConfigMap]

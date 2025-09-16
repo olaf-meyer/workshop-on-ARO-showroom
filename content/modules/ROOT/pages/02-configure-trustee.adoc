@@ -53,7 +53,6 @@ openssl req -new -x509 -key token.key -out token.crt -days 365 \
 
 ----
 
-
 [#trustee-route]
 == Create a route for Trustee
 
