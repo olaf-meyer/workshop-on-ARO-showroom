@@ -8,6 +8,7 @@
 ** xref:02-configure-trustee.adoc#trustee-keys[Create the required keys]
 ** xref:02-configure-trustee.adoc#trustee-route[Create the route]
 ** xref:02-configure-trustee.adoc#trustee-secret[Create the Trustee authentication secret]
+** xref:02-configure-trustee.adoc#trustee-jwk[Create the attestation token key]
 ** xref:02-configure-trustee.adoc#trustee-cm[Create Trustee ConfigMap]
 ** xref:02-configure-trustee.adoc#trustee-initdata[Create the initdata policy]
 ** xref:02-configure-trustee.adoc#trustee-conf[Configure Trustee]

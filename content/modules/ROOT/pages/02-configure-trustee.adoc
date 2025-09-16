@@ -131,9 +131,8 @@ The attestation token has to therefore be signed by the Trustee, otherwise a mal
 Upload the attestation token key and certificate as secret:
 [source,sh,role=execute]
 ----
-oc create secret generic attestation-cert --from-file=token.crt -n trustee-operator-system
 
-oc create secret generic attestation-key --from-file=token.key -n trustee-operator-system
+oc create secret generic attestation-token --from-file=token.crt --from-file=token.key -n trustee-operator-system
 ----
 
 [#trustee-cm]
@@ -164,12 +163,12 @@ data:
 
     [attestation_token]
     insecure_key = false
-    trusted_certs_paths = ["/opt/confidential-containers/kbs/repository/default/attestation-cert/token.crt"]
+    trusted_certs_paths = ["/opt/confidential-containers/kbs/repository/default/attestation-token/token.crt"]
     attestation_token_type = "CoCo"
 
     [attestation_service.attestation_token_broker.signer]
-    key_path = "/opt/confidential-containers/kbs/repository/default/attestation-cert/token.key"
-    cert_path = "/opt/confidential-containers/kbs/repository/default/attestation-key/token.crt"
+    key_path = "/opt/confidential-containers/kbs/repository/default/attestation-token/token.key"
+    cert_path = "/opt/confidential-containers/kbs/repository/default/attestation-token/token.crt"
 
     [attestation_service]
     type = "coco_as_builtin"
@@ -208,7 +207,7 @@ cat kbs-configmap.yaml
 oc apply -f kbs-configmap.yaml
 ----
 
-[#trustee-trustee-]
+[#trustee-initdata]
 == The initdata policy
 
 === About initdata
@@ -787,7 +786,7 @@ spec:
   kbsAuthSecretName: kbs-auth-public-key
   kbsDeploymentType: AllInOneDeployment
   kbsRvpsRefValuesConfigMapName: rvps-reference-values
-  kbsSecretResources: ["kbsres1", "security-policy", "attestation-cert", "attestation-key"]
+  kbsSecretResources: ["kbsres1", "security-policy", "attestation-token"]
   kbsResourcePolicyConfigMapName: resource-policy
   kbsAttestationPolicyConfigMapName: attestation-policy
   kbsHttpsKeySecretName: kbs-https-key
