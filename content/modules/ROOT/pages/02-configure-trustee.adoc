@@ -4,23 +4,35 @@ Now that the Trustee operator is installed, we need to set it up.
 
 Reminder: You can assume that **everything running in the trustee-operator-sysem namespace should run in a trusted, separate environment**. Because of the limitations of this ARO workshop, it is not possible to set up two clusters.
 
-[#trustee-route]
-== Create a route for Trustee
+[#trustee-keys]
+== Create the required keys
 
-Create a secure route with `passthrough` TLS termination for Trustee. External ingress traffic does not get decrypted by the router but forwarded directly to Trustee pod.
-It is also possible to create an `edge` route, but then the connection between Trustee and OCP router will be in plain text (http). In this workshop, we will use `passthrough`.
+In order to simplify the flow, we will create here all the keys necessary to securely run Trustee.
 
-Create the self-signed certificates and upload them in the Trustee namespace:
+More specifically, these keys are:
+* admin authentication keys
+* https keys
+* attestation token key
+
+Of course the user can also bring his own existing keys. The exact purpose of these keys will be explained as they are used in the following sections.
+
 [source,sh,role=execute]
 ----
+mkdir -p trustee
+cd trustee
+
+# Admin authentication keys
+openssl genpkey -algorithm ed25519 > privateKey
+openssl pkey -in privateKey -pubout -out publicKey
+
+# HTTPS keys
 DOMAIN=$(oc get ingress.config/cluster -o jsonpath='{.spec.domain}')
 NS=trustee-operator-system
 ROUTE_NAME=kbs-service
 
 ROUTE="${ROUTE_NAME}-${NS}.${DOMAIN}"
-
-mkdir -p trustee
-cd trustee
+echo "ROUTE: $ROUTE"
+echo ""
 
 openssl req -x509 -nodes -days 365 \
   -newkey rsa:2048 \
@@ -34,6 +46,23 @@ openssl req -new -x509 -key tls.key -out tls.crt -days 365 \
   -subj "/CN=myapp.local/O=MyOrg" \
   -addext "subjectAltName=DNS:${ROUTE}"
 
+# Attestation token
+openssl ecparam -name prime256v1 -genkey -noout -out token.key
+openssl req -new -x509 -key token.key -out token.crt -days 365 \
+	-subj "/CN=myapp.example.com/O=MyOrg"
+
+----
+
+
+[#trustee-route]
+== Create a route for Trustee
+
+Create a secure route with `passthrough` TLS termination for Trustee. External ingress traffic does not get decrypted by the router but forwarded directly to Trustee pod.
+It is also possible to create an `edge` route, but then the connection between Trustee and OCP router will be in plain text (http). In this workshop, we will use `passthrough`.
+
+Upload the previously self-signed certificates in the Trustee namespace:
+[source,sh,role=execute]
+----
 oc create secret generic kbs-https-certificate --from-file=tls.crt -n trustee-operator-system
 
 oc create secret generic kbs-https-key --from-file=tls.key -n trustee-operator-system
@@ -81,25 +110,38 @@ https://kbs-service-trustee-operator-system.apps.rs01nyk5.eastus.aroapp.io
 [#trustee-secret]
 == Create the Trustee authentication secret
 
-. Create private and public keys.
-+
-[source,sh,role=execute]
-----
-openssl genpkey -algorithm ed25519 > privateKey
-openssl pkey -in privateKey -pubout -out publicKey
-----
+Such key is not really used when the Trustee is run as Openshift operator, but it is needed in order to start the trustee application.
 
-. Create a secret with the public key.
-+
+Create a secret with the public key:
 [source,sh,role=execute]
 ----
 oc create secret generic kbs-auth-public-key --from-file=./publicKey -n trustee-operator-system
+----
+
+[#trustee-jwk]
+== Create the attestation token key
+
+Secret retrieval works in a two-step authentication:
+* First, a confidential container sends the reference values to the Trustee
+* The Trustee checks the reference values and if they match, generates and signs an attestation token
+* The attestation token is then sent to the CoCo pod
+* The CoCo pod can now use this token without doing the attestation again to request a secret, and the same token can be reused multiple times until it expires.
+
+The attestation token has to therefore be signed by the Trustee, otherwise a malicious CoCo pod can sign its own fake attestation token and request secrets from the Trustee bypassing the whole reference values check.
+
+Upload the attestation token key and certificate as secret:
+[source,sh,role=execute]
+----
+oc create secret generic attestation-cert --from-file=token.crt -n trustee-operator-system
+
+oc create secret generic attestation-key --from-file=token.key -n trustee-operator-system
 ----
 
 [#trustee-cm]
 == Create Trustee ConfigMap
 
 Create the and apply the Trustee `kbs-configmap.yaml` ConfigMap.
+Among the others, in this ConfigMap we will enable HTTPS, authenticated admin API and signed attestation token verification.
 
 [source,sh,role=execute]
 ----
@@ -118,12 +160,17 @@ data:
     certificate = "/etc/https-cert/tls.crt"
 
     [admin]
-    insecure_api = true
+    insecure_api = false
     auth_public_key = "/etc/auth-secret/publicKey"
 
     [attestation_token]
-    insecure_key = true
+    insecure_key = false
+    trusted_certs_paths = ["/opt/confidential-containers/kbs/repository/default/attestation-cert/token.crt"]
     attestation_token_type = "CoCo"
+
+    [attestation_service.attestation_token_broker.signer]
+    key_path = "/opt/confidential-containers/kbs/repository/default/attestation-cert/token.key"
+    cert_path = "/opt/confidential-containers/kbs/repository/default/attestation-key/token.crt"
 
     [attestation_service]
     type = "coco_as_builtin"
@@ -741,7 +788,7 @@ spec:
   kbsAuthSecretName: kbs-auth-public-key
   kbsDeploymentType: AllInOneDeployment
   kbsRvpsRefValuesConfigMapName: rvps-reference-values
-  kbsSecretResources: ["kbsres1", "security-policy"]
+  kbsSecretResources: ["kbsres1", "security-policy", "attestation-cert", "attestation-key"]
   kbsResourcePolicyConfigMapName: resource-policy
   kbsAttestationPolicyConfigMapName: attestation-policy
   kbsHttpsKeySecretName: kbs-https-key
