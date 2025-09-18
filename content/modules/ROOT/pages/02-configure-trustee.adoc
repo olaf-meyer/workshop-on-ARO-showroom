@@ -655,7 +655,7 @@ clear
 cat security-policy-config.json
 ----
 +
-IMPORTANT: Note how we set `reject` as `default` policy. As explained above, this is forbid any other non-specified image from being run. Change it in `insecureAcceptAnything` if you want to allow also unsigned images. If you don't care at all about container policy, leave `insecureAcceptAnything` and ensure `"transports": {}"`.
+IMPORTANT: Note how we set `reject` as a `default` global policy. As explained above, this forbids any other non-specified image from being run. Change it in `insecureAcceptAnything` if you want to allow also unsigned images. If you don't care at all about container policy, leave `insecureAcceptAnything` and ensure `"transports": {}"`.
 +
 For more information on security policy, see https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md[containers-policy.json 5, =blank=blank].
 
