@@ -10,6 +10,7 @@ Reminder: You can assume that **everything running in the trustee-operator-sysem
 In order to simplify the flow, we will create here all the keys necessary to securely run Trustee.
 
 More specifically, these keys are:
+
 * admin authentication keys
 * https keys
 * attestation token key
@@ -121,6 +122,7 @@ oc create secret generic kbs-auth-public-key --from-file=./publicKey -n trustee-
 == Create the attestation token key
 
 Secret retrieval works in a two-step authentication:
+
 * First, a confidential container sends the reference values to the Trustee
 * The Trustee checks the reference values and if they match, generates and signs an attestation token
 * The attestation token is then sent to the CoCo pod
