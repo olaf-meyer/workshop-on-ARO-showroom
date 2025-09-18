@@ -600,18 +600,18 @@ In this example, we are going to create a policy that:
 * Ensures that the container `quay.io/confidential-devhub/signed-hello-openshift` (regardless of the tag) is signed, otherwise it will not be run.
 * As a global policy, reject any other registry and non-signed image. This means only the above image is allowed to run, and only if it's signed. Such policy can be also relaxed, for example allowing any container under the `confidential-devhub` org (by using `quay.io/confidential-devhub/*`), or to restrict the image signature to only such org/container pair while allowing all the others to be unsigned (change `reject` to `insecureAcceptAnything`).
 +
-Let's create a secret `img-sig` containing the public key used to signed the above container image: because the image was built by the CoCo team, we need to download it first.
+Let's create a secret containing the public key used to signed the above container image: because the image was built by the CoCo team, we need to download it first.
 +
 [source,sh,role=execute]
 ----
 # Download the key
-wget https://raw.githubusercontent.com/confidential-devhub/workshop-on-ARO-showroom/refs/heads/showroom/helpers/cosign.pub
+curl -L https://raw.githubusercontent.com/confidential-devhub/workshop-on-ARO-showroom/refs/heads/showroom/helpers/cosign.pub -o cosign.pub
 
-SIGNATURE_SECRET_NAME=img-sig
+SIGNATURE_SECRET_NAME=cosign-key
 SIGNATURE_SECRET_FILE=hello-pub-key
 
-oc create secret generic img-sig \
-    --from-file=hello-pub-key=./cosign.pub \
+oc create secret generic $SIGNATURE_SECRET_NAME \
+    --from-file=$SIGNATURE_SECRET_FILE=./cosign.pub \
     -n trustee-operator-system
 ----
 +
@@ -760,25 +760,19 @@ spec:
   kbsAuthSecretName: kbs-auth-public-key
   kbsDeploymentType: AllInOneDeployment
   kbsRvpsRefValuesConfigMapName: rvps-reference-values
-  kbsSecretResources: ["kbsres1", "security-policy", "attestation-token"]
+  kbsSecretResources: ["kbsres1", "security-policy", "attestation-token", "$SIGNATURE_SECRET_NAME"]
   kbsResourcePolicyConfigMapName: resource-policy
   kbsAttestationPolicyConfigMapName: attestation-policy
   kbsHttpsKeySecretName: kbs-https-key
   kbsHttpsCertSecretName: kbs-https-certificate
   tdxConfigSpec:
     kbsTdxConfigMapName: tdx-config
-  #kbsServiceType: NodePort
 EOF
 
 clear
 cat kbsconfig-cr.yaml
 ----
 
-If you did the optional steps:
-
-* For enforced container image signature verification, extend `kbsSecretResources` list to also have the value of `$SIGNATURE_SECRET_NAME`.
-* If you are not planning to use TDX, disable the `tdxConfigSpec` section.
-* Uncomment `kbsServiceType` if you created a service type other than the default `ClusterIP` service to expose applications within the cluster external traffic. You can specify `NodePort`, `LoadBalancer`, or `ExternalName`.
 
 Once the KbsConfig has been configured, apply it.
 
