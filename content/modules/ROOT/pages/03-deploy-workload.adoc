@@ -63,7 +63,7 @@ IMPORTANT: you will need to also update the `PCR8` value in the xref:02-configur
 
 In this example we will show how easy is to modify an existing pod to make it running in CoCo, i.e. specifying the `runtimeclass` in the podspec. No other action is necessary w.r.t the pod itself, and the confidential VM is completely transparent to it.
 
-This is a sample yaml that runs an `hello-openshift` pod in the `default` namespace. The pod application is not developed by the CoCo team, nor was modified purposefully for this example. The code is available https://github.com/openshift-for-developers/hello[here, window=blank]. This pod creates a server and outputs `"Hello Openshift!"` every time it is reached. The difference between this pod deployed as Confidential Container and traditional pod is just that the former has `spec.runtimeClassName: kata-remote` defined in the pod spec.
+This is a sample yaml that runs an `hello-openshift` pod in the `default` namespace. The pod application is not developed by the CoCo team, nor was modified purposefully for this example. It was built from https://github.com/openshift-for-developers/hello[here, window=blank], signed and pushed into the `quay.io/confidential-devhub/signed-hello-openshift` repo. This pod creates a server and outputs `"Hello Openshift!"` every time it is reached. The difference between this pod deployed as Confidential Container and traditional pod is just that the former has `spec.runtimeClassName: kata-remote` defined in the pod spec.
 
 . Switch to the `default` namespace if not done already
 +
@@ -88,7 +88,7 @@ spec:
   runtimeClassName: kata-remote
   containers:
     - name: hello-openshift
-      image: quay.io/openshift/origin-hello-openshift
+      image: quay.io/confidential-devhub/signed-hello-openshift:latest
       ports:
         - containerPort: 8888
       securityContext:

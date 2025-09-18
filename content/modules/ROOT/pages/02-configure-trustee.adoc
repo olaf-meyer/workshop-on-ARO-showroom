@@ -587,7 +587,7 @@ oc apply -f tdx-config.yaml
 [#trustee-cisvp]
 === Container image signature verification policy
 
-**Purpose of this resource**: Sets wether to enforce or not the container image signature verification feature. If enabled, all containers images not signed by the trusted certificate provided in the xref:02-configure-trustee.adoc#trustee-enable-sv[container image verification secret] will not be run.
+**Purpose of this resource**: Sets wether to enforce or not the container image signature verification feature. If enabled, all containers images not signed by the trusted certificate provided in the container image verification secret will not be run.
 
 The Trustee Operator returns this secret to the CoCo CVM components (which will run the CoCo pod) after attestation, to make sure they will perform the intended check. The CVM components will then compare the secret with the actual pod signature to determine whether to run it or not, ensuring that only trusted and authenticated container images are deployed in your environment.
 
@@ -597,7 +597,68 @@ In this workshop, we will use a policy that disables signature verification. In 
 
 For more information on security policy, see https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md[containers-policy.json 5, =blank=blank].
 
-. Create a `security-policy-config.json` that xref:02-configure-trustee.adoc#trustee-enable-sv[enables] or xref:02-configure-trustee.adoc#trustee-disable-sv[disables] signature verification.
+. Create a `security-policy-config.json` that enables or disables signature verification.
+
+In this example, we are going to create a policy that:
+
+* Ensures that the container `quay.io/confidential-devhub/signed-hello-openshift` (regardless of the tag) is signed, otherwise it will not be run.
+* Reject any other registry and non-signed image. This means only the above image is allowed to run, and only if it's signed. Such policy can be also relaxed, for example allowing any container under the `confidential-devhub` org (by using `quay.io/confidential-devhub/*`), or to restrict the image signature to only such org/container pair while allowing all the others to be unsigned (change `reject` to `insecureAcceptAnything`).
+
+Let's create a secret `img-sig` containing the public key used to signed the above container image: because the image was built by the CoCo team, we need to download it first.
+
+[source,sh,role=execute]
+----
+# Download the key
+wget https://raw.githubusercontent.com/confidential-devhub/workshop-on-ARO-showroom/refs/heads/showroom/helpers/cosign.pub
+
+SIGNATURE_SECRET_NAME=img-sig
+SIGNATURE_SECRET_FILE=hello-pub-key
+
+oc create secret generic img-sig \
+    --from-file=hello-pub-key=./cosign.pub \
+    -n trustee-operator-system
+----
+
+Note that `$SIGNATURE_SECRET_NAME` will be later used in the xref:02-configure-trustee.adoc#trustee-kbsconfig[KbsConfig]
+
+Then, create `security-policy-config.json`.
+
+Specify the image repository for `$SECURITY_POLICY_TRANSPORT`, in this case `docker`:. For more information, see https://github.com/containers/image/blob/main/docs/containers-transports.5.md[containers-transports 5, =blank=blank].
+
+Create `security-policy-config.json`. Specify the container image in `$SECURITY_POLICY_IMAGE`.
+
+[source,sh,role=execute]
+----
+SECURITY_POLICY_TRANSPORT=docker
+SECURITY_POLICY_IMAGE=quay.io/confidential-devhub/signed-hello-openshift
+
+cat > security-policy-config.json <<EOF
+{
+  "default": [
+      {
+      "type": "reject"
+      }
+  ],
+  "transports": {
+      "$SECURITY_POLICY_TRANSPORT": {
+          "$SECURITY_POLICY_IMAGE":
+          [
+              {
+                  "type": "sigstoreSigned",
+                  "keyPath": "kbs:///default/$SIGNATURE_SECRET_NAME/$SIGNATURE_SECRET_FILE"
+              }
+          ]
+      }
+  }
+}
+EOF
+
+clear
+cat security-policy-config.json
+----
+
+IMPORTANT: Note how we set `reject` as `default` policy. As explained above, this is forbid any other non-specified image from being run. Change it in `insecureAcceptAnything` if you want to allow also unsigned images. If you don't care at all about container policy, leave `insecureAcceptAnything` and ensure `"transports": {}"`.
+
 
 . After `security-policy-config.json` is created, upload it as a secret with the following command:
 
@@ -611,94 +672,6 @@ oc create secret generic security-policy \
 IMPORTANT: Do not alter the secret type, `security-policy`, or the key, `osc`.
 
 Note that `security-policy` will be later used in the xref:02-configure-trustee.adoc#trustee-kbsconfig[KbsConfig]
-
-[#trustee-disable-sv]
-==== **Disable signature verification:**
-
-[source,sh,role=execute]
-----
-cat > security-policy-config.json <<EOF
-{
-  "default": [
-  {
-    "type": "insecureAcceptAnything"
-  }],
-  "transports": {}
-}
-EOF
-
-clear
-cat security-policy-config.json
-----
-
-[#trustee-enable-sv]
-==== **Enable signature verification**
-
-If you use container image signature verification, you must create a secret that contains the public container image signing key. In other words, if the container is not signed by a trusted signature, it shouldn't run.
-
-Specify the type `$CONTAINER_IMAGE_SIGNATURE_TYPE` (for example `img-sig`), the tag `$CONTAINER_IMAGE_SIGNATURE_TAG` (for example `pub-key`), and `$CONTAINER_IMAGE_SIGNATURE_PK`, the public container image signing key.
-
-[source,sh,role=execute]
-----
-CONTAINER_IMAGE_SIGNATURE_TYPE=type
-CONTAINER_IMAGE_SIGNATURE_TAG=tag
-CONTAINER_IMAGE_SIGNATURE_PK=public_key_file
-----
-
-Create a secret with the following command:
-
-[source,sh,role=execute]
-----
-oc create secret generic $CONTAINER_IMAGE_SIGNATURE_TYPE \
-    --from-file=$CONTAINER_IMAGE_SIGNATURE_TAG=./$CONTAINER_IMAGE_SIGNATURE_PK \
-    -n trustee-operator-system
-----
-
-Note that `$CONTAINER_IMAGE_SIGNATURE_TYPE` will be later used in the xref:02-configure-trustee.adoc#trustee-kbsconfig[KbsConfig]
-
-Then, create `security-policy-config.json`.
-
-Specify the image repository for `$SECURITY_POLICY_TRANSPORT`, for example, `docker`:. For more information, see https://github.com/containers/image/blob/main/docs/containers-transports.5.md[containers-transports 5, =blank=blank].
-
-Specify the container `$SECURITY_POLICY_REGISTRY` and `$SECURITY_POLICY_IMAGE`, for example, `quay.io` and `my-image`.
-
-Use the previously defined container image signature verification secret `tag` and `type` defined as `$CONTAINER_IMAGE_SIGNATURE_TYPE` and `$CONTAINER_IMAGE_SIGNATURE_TAG`.
-
-[source,sh,role=execute]
-----
-SECURITY_POLICY_TRANSPORT=transport
-SECURITY_POLICY_REGISTRY=registry
-SECURITY_POLICY_IMAGE=image
-----
-
-Create `security-policy-config.json`:
-
-[source,sh,role=execute]
-----
-cat > security-policy-config.json <<EOF
-{
-  "default": [
-      {
-      "type": "insecureAcceptAnything"
-      }
-  ],
-  "transports": {
-      "$SECURITY_POLICY_TRANSPORT": {
-          "$SECURITY_POLICY_REGISTRY/$SECURITY_POLICY_IMAGE":
-          [
-              {
-                  "type": "sigstoreSigned",
-                  "keyPath": "kbs:///default/$CONTAINER_IMAGE_SIGNATURE_TYPE/$CONTAINER_IMAGE_SIGNATURE_TAG"
-              }
-          ]
-      }
-  }
-}
-EOF
-
-clear
-cat security-policy-config.json
-----
 
 [#trustee-rap]
 ==== **Resource access policy**
@@ -804,7 +777,7 @@ cat kbsconfig-cr.yaml
 
 If you did the optional steps:
 
-* For enforced container image signature verification, extend `kbsSecretResources` list to also have the value of `$CONTAINER_IMAGE_SIGNATURE_TYPE`.
+* For enforced container image signature verification, extend `kbsSecretResources` list to also have the value of `$SIGNATURE_SECRET_NAME`.
 * If you are not planning to use TDX, disable the `tdxConfigSpec` section.
 * Uncomment `kbsServiceType` if you created a service type other than the default `ClusterIP` service to expose applications within the cluster external traffic. You can specify `NodePort`, `LoadBalancer`, or `ExternalName`.
 
