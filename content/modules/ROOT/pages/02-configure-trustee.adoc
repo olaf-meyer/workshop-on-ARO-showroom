@@ -594,14 +594,14 @@ The Trustee Operator returns this secret to the CoCo CVM components (which will 
 You must in any case create the container image signature verification policy because signature verification is always enabled. If this policy is missing, the pods will not start.
 
 . Create a `security-policy-config.json` that enables or disables signature verification.
-
++
 In this example, we are going to create a policy that:
-
++
 * Ensures that the container `quay.io/confidential-devhub/signed-hello-openshift` (regardless of the tag) is signed, otherwise it will not be run.
 * As a global policy, reject any other registry and non-signed image. This means only the above image is allowed to run, and only if it's signed. Such policy can be also relaxed, for example allowing any container under the `confidential-devhub` org (by using `quay.io/confidential-devhub/*`), or to restrict the image signature to only such org/container pair while allowing all the others to be unsigned (change `reject` to `insecureAcceptAnything`).
-
++
 Let's create a secret `img-sig` containing the public key used to signed the above container image: because the image was built by the CoCo team, we need to download it first.
-
++
 [source,sh,role=execute]
 ----
 # Download the key
@@ -614,17 +614,17 @@ oc create secret generic img-sig \
     --from-file=hello-pub-key=./cosign.pub \
     -n trustee-operator-system
 ----
-
++
 If you want to sign your own container, refer to the https://developers.redhat.com/products/trusted-artifact-signer/overview[Red Hat Trusted Artifact Signer] or other tools to sign container images. A simple guide on how to use upstream `cosign` is xref:04-sign-pod.adoc[here].
-
++
 Note that `$SIGNATURE_SECRET_NAME` will be later used in the xref:02-configure-trustee.adoc#trustee-kbsconfig[KbsConfig]
-
++
 Then, create `security-policy-config.json`.
-
++
 Specify the image repository for `$SECURITY_POLICY_TRANSPORT`, in this case `docker`:. For more information, see https://github.com/containers/image/blob/main/docs/containers-transports.5.md[containers-transports 5, =blank=blank].
-
++
 Create `security-policy-config.json`. Specify the container `registry/image` in `$SECURITY_POLICY_IMAGE`.
-
++
 [source,sh,role=execute]
 ----
 SECURITY_POLICY_TRANSPORT=docker
@@ -654,22 +654,22 @@ EOF
 clear
 cat security-policy-config.json
 ----
-
++
 IMPORTANT: Note how we set `reject` as `default` policy. As explained above, this is forbid any other non-specified image from being run. Change it in `insecureAcceptAnything` if you want to allow also unsigned images. If you don't care at all about container policy, leave `insecureAcceptAnything` and ensure `"transports": {}"`.
-
++
 For more information on security policy, see https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md[containers-policy.json 5, =blank=blank].
 
 . After `security-policy-config.json` is created, upload it as a secret with the following command:
-
++
 [source,sh,role=execute]
 ----
 oc create secret generic security-policy \
   --from-file=osc=./security-policy-config.json \
   -n trustee-operator-system
 ----
-
++
 IMPORTANT: Do not alter the secret type, `security-policy`, or the key, `osc`.
-
++
 Note that `security-policy` will be later used in the xref:02-configure-trustee.adoc#trustee-kbsconfig[KbsConfig]
 
 [#trustee-rap]
