@@ -2,7 +2,9 @@
 
 xref:02-configure-trustee.adoc#trustee-cisvp[Back to signature verification policy]
 
-1. Install `cosign`
+1. Log into podman. This is necessary as `cosign` will push signatures into your repo.
+
+2. Install `cosign`
 +
 [source,sh,role=execute]
 ----
@@ -14,8 +16,6 @@ curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-l
 mv cosign-linux-amd64 cosign
 chmod +x cosign
 ----
-
-2. Log into podman
 
 3. Create a cosign keypair
 +
