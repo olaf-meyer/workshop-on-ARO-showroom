@@ -621,7 +621,7 @@ Note that `$SIGNATURE_SECRET_NAME` will be later used in the xref:02-configure-t
 +
 Then, create `security-policy-config.json`.
 +
-Specify the image repository for `$SECURITY_POLICY_TRANSPORT`, in this case `docker`:. For more information, see https://github.com/containers/image/blob/main/docs/containers-transports.5.md[containers-transports 5, =blank=blank].
+Specify the image repository for `$SECURITY_POLICY_TRANSPORT`, in this case `docker`:. For more information, see https://github.com/containers/image/blob/main/docs/containers-transports.5.md[containers-transports 5, window=blank].
 +
 Create `security-policy-config.json`. Specify the container `registry/image` in `$SECURITY_POLICY_IMAGE`.
 +
@@ -657,7 +657,7 @@ cat security-policy-config.json
 +
 IMPORTANT: Note how we set `reject` as a `default` global policy. As explained above, this forbids any other non-specified image from being run. Change it in `insecureAcceptAnything` if you want to allow also unsigned images. If you don't care at all about container policy, leave `insecureAcceptAnything` and ensure `"transports": {}"`.
 +
-For more information on security policy, see https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md[containers-policy.json 5, =blank=blank].
+For more information on security policy, see https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md[containers-policy.json.5, window=blank] and in particular https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md#a-reasonably-locked-down-system[this example, =window=blank].
 
 . After `security-policy-config.json` is created, upload it as a secret with the following command:
 +
@@ -677,7 +677,7 @@ Note that `security-policy` will be later used in the xref:02-configure-trustee.
 
 **Purpose of this resource**: Resource policies control which secrets are released and are generally scoped to the workload. They allow the user define which attested workload has access to which resource, to avoid that the wrong client accesses data that it is not supposed to.
 
-In this example below we are creating a simple policy that accepts any request that comes from an attester (client) that does use a TEE. For more information about resource access policies, and how to create stronger ones, look https://confidentialcontainers.org/docs/attestation/policies/#resource-policies[here, =blank=blank]
+In this example below we are creating a simple policy that accepts any request that comes from an attester (client) that does use a TEE. For more information about resource access policies, and how to create stronger ones, look https://confidentialcontainers.org/docs/attestation/policies/#resource-policies[here, window=blank]
 
 [source,sh,role=execute]
 ----
