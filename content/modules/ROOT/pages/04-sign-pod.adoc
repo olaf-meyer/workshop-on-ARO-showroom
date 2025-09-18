@@ -1,3 +1,66 @@
 = Sign an existing pod
 
 xref:02-configure-trustee.adoc#trustee-cisvp[Back to signature verification policy]
+
+1. Install `cosign`
++
+[source,sh,role=execute]
+----
+mkdir -p cosign
+cd cosign
+
+curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+
+mv cosign-linux-amd64 cosign
+chmod +x cosign
+----
+
+2. Log into podman
+
+3. Create a cosign keypair
++
+[source,sh,role=execute]
+----
+./cosign generate-key-pair
+----
+
+4. Pull an existing pod or create it yourself. Here we will pull it
++
+[source,sh,role=execute]
+----
+podman pull quay.io/confidential-devhub/signed-hello-openshift
+----
+
+5. Optional: Make a copy for your own repo, push it. This is needed because cosign pushes the signature into the repo. If you don’t have access to that repo (like in this example) you won’t be able to push the signature in ghcr.io/confidential-containers/test-container-image-rs.
++
+[source,sh,role=execute]
+----
+YOUR_REPO=write/your/repo:here
+
+podman tag quay.io/confidential-devhub/signed-hello-openshift $YOUR_REPO
+
+podman push $YOUR_REPO
+----
+
+6. Delete existing signature, if there is
++
+[source,sh,role=execute]
+----
+./cosign clean $YOUR_REPO
+----
+
+7. Sign the new image
++
+[source,sh,role=execute]
+----
+./cosign sign --key cosign.key quay.io/eesposit/cosigned-img:latest
+----
+
+8. Verify the signature is there
++
+[source,sh,role=execute]
+----
+./cosign verify --key cosign.pub quay.io/eesposit/cosigned-img:latest
+----
+
+xref:02-configure-trustee.adoc#trustee-cisvp[Back to signature verification policy]
