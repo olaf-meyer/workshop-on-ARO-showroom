@@ -39,11 +39,6 @@ openssl req -x509 -nodes -days 365 \
   -newkey rsa:2048 \
   -keyout tls.key \
   -out tls.crt \
-  -subj "/CN=myapp.example.com/O=MyOrg"
-
-openssl genrsa -out tls.key 2048
-
-openssl req -new -x509 -key tls.key -out tls.crt -days 365 \
   -subj "/CN=myapp.local/O=MyOrg" \
   -addext "subjectAltName=DNS:${ROUTE}"
 
@@ -67,22 +62,17 @@ oc create secret generic kbs-https-certificate --from-file=tls.crt -n trustee-op
 
 oc create secret generic kbs-https-key --from-file=tls.key -n trustee-operator-system
 
+TRUSTEE_CERT=$(cat tls.crt)
+
 clear
+echo "$TRUSTEE_CERT"
+echo ""
 echo "ROUTE: $ROUTE"
 echo ""
 oc get secrets -n trustee-operator-system | grep kbs-https
 ----
 
-Store the `tls.crt` content in the `TRUSTEE_CERT` variable. This will be helpful later when configuring the xref:02-configure-trustee.adoc#trustee-ip[initdata]
-
-[source,sh,role=execute]
-----
-TRUSTEE_CERT=$(cat tls.crt)
-
-echo "$TRUSTEE_CERT"
-----
-
-Create a route and set the `TRUSTEE_HOST` variable. This variable will be useful later when we set the xref:02-configure-osc.adoc#pp-cm[peer-pods ConfigMap].
+Create the route and set `TRUSTEE_HOST`, which together with `TRUSTEE_CERT` will be used later when configuring the xref:02-configure-trustee.adoc#trustee-ip[initdata].
 
 [source,sh,role=execute]
 ----
