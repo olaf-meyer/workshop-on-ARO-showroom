@@ -31,6 +31,9 @@ DOMAIN=$(oc get ingress.config/cluster -o jsonpath='{.spec.domain}')
 NS=trustee-operator-system
 ROUTE_NAME=kbs-service
 
+CN_NAME=my_trustee
+ORG_NAME=my_org
+
 ROUTE="${ROUTE_NAME}-${NS}.${DOMAIN}"
 echo "ROUTE: $ROUTE"
 echo ""
@@ -39,13 +42,13 @@ openssl req -x509 -nodes -days 365 \
   -newkey rsa:2048 \
   -keyout tls.key \
   -out tls.crt \
-  -subj "/CN=${ROUTE}/O=MyOrg" \
+  -subj "/CN=${CN_NAME}/O=${ORG_NAME}$" \
   -addext "subjectAltName=DNS:${ROUTE}"
 
 # Attestation token
 openssl ecparam -name prime256v1 -genkey -noout -out token.key
 openssl req -new -x509 -key token.key -out token.crt -days 365 \
-	-subj "/CN=${ROUTE}/O=MyOrg"
+	-subj "/CN=${CN_NAME}/O=${ORG_NAME}"
 
 ----
 
