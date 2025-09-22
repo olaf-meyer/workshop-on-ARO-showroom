@@ -24,7 +24,7 @@ All blogposts are under this https://www.redhat.com/en/blog/learn-about-confiden
 
 . Go into the terminal on the right and run the following commands:
 +
-[source,bash]
+[source,bash,role=execute]
 ----
 # Log into Azure CLI
 az login --service-principal --username={azure_service_principal_id} --password={azure_service_principal_password} --tenant={azure_tenant_id}
