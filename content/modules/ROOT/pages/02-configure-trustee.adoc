@@ -392,8 +392,66 @@ You can configure reference values for the Reference Value Provider Service (RVP
 
 Red Hat currently ships an official CoCo podVM image together with its measurements. Therefore we simply need to insert the values into `rvps-configmap.yaml`. Such values ensure that CoCo is running that specific image, with a RH kernel and specific features like initdata policy enabled.
 
+Let's download the measurements from Redhat and then convert them into a reference value configmap:
+
 [source,sh,role=execute]
 ----
+# 1. Prepare required files
+IMAGE=$(oc get csv -n openshift-sandboxed-containers-operator -o yaml \
+  | grep RELATED_IMAGE_PODVM_OCI -A1 \
+  | awk '/value:/ {print $2}')
+
+oc get -n openshift-config secret/pull-secret -ojson | jq -r '.data.".dockerconfigjson"' | base64 -d | jq '.' >cluster-pull-secret.json
+
+# On the ARO workshop, we don't have enough space for podman.
+# Use a different folder.
+sudo mkdir -p /podvm
+sudo chown azure:azure /podvm
+
+# 2. Download the measurements
+podman pull --root /podvm --authfile cluster-pull-secret.json $IMAGE
+
+cid=$(podman create --root /podvm --entrypoint /bin/true registry.redhat.io/openshift-sandboxed-containers/osc-dm-verity-image@sha256:10431be6ef7be6da1b5749bbf5e6207db92804d3530605b825c0e0d98bd9f46e)
+echo "CID ${cid}"
+podman unshare --root /podvm sh -c '
+  mnt=$(podman mount --root /podvm '"$cid"')
+  echo "MNT ${mnt}"
+  cp $mnt/image/measurements.json /podvm
+  podman umount --root /podvm '"$cid"'
+'
+podman rm --root /podvm $cid
+JSON_DATA=$(cat /podvm/measurements.json)
+
+# 3. Prepare reference-values.json
+REFERENCE_VALUES_JSON=$(echo "$JSON_DATA" | jq \
+  --arg pcr8_val "$PCR8_HASH" '
+  .measurements.sha256 | to_entries | map({
+    "name": .key,
+    "expiration": "2026-12-12T00:00:00Z",
+    "hash-value": [
+      {
+        "alg": "sha256",
+        "value": (.value | ltrimstr("0x"))
+      }
+    ]
+  })
+  +
+  [
+    {
+      "name": "pcr08",
+      "expiration": "2026-12-12T00:00:00Z",
+      "hash-value": [
+        {
+          "alg": "sha256",
+          "value": $pcr8_val
+        }
+      ]
+    }
+  ]
+  | sort_by(.name | ltrimstr("pcr") | tonumber)
+' | sed 's/^/    /')
+
+# 4. Build the final ConfigMap
 cat > rvps-configmap.yaml <<EOF
 apiVersion: v1
 kind: ConfigMap
@@ -402,66 +460,12 @@ metadata:
   namespace: trustee-operator-system
 data:
   reference-values.json: |
-
-    [
-     {
-        "name": "pcr03",
-        "expiration": "2025-12-12T00:00:00Z",
-        "hash-value": [
-          {
-                "alg": "sha256",
-                "value": "3d458cfe55cc03ea1f443f1562beec8df51c75e14a9fcf9a7234a13f198e7969"
-          }
-        ]
-     },
-     {
-        "name": "pcr08",
-        "expiration": "2025-12-12T00:00:00Z",
-        "hash-value": [
-          {
-                "alg": "sha256",
-                "value": "${PCR8_HASH}"
-          }
-        ]
-     },
-     {
-        "name": "pcr09",
-        "expiration": "2025-12-12T00:00:00Z",
-        "hash-value": [
-          {
-                "alg": "sha256",
-                "value": "22e306eac888c8393203858a8b4b7b8f36f3d1434fc4dd044e6b20c6fa43c4d9"
-          }
-        ]
-     },
-     {
-        "name": "pcr11",
-        "expiration": "2025-12-12T00:00:00Z",
-        "hash-value": [
-          {
-                "alg": "sha256",
-                "value": "53e58bd6ebb6103c18fd19093cb1bcd0a9235685ad642a6d0981ce8314f5e81d"
-          }
-        ]
-     },
-     {
-        "name": "pcr12",
-        "expiration": "2025-12-12T00:00:00Z",
-        "hash-value": [
-          {
-                "alg": "sha256",
-                "value": "267c5142db5118a15e5bd98011bf49bb21e72405ece1d9b1ca7fb27de95ee5b3"
-          }
-        ]
-     }
-    ]
+$REFERENCE_VALUES_JSON
 EOF
 
 clear
 cat rvps-configmap.yaml
 ----
-
-Inside `reference-values.json` field, specify the trusted digests for your hardware platform if required. Otherwise, leave it empty. For the purpose of this workshop, you can leave it empty.
 
 Once the reference values have been added, apply the ConfigMap.
 
