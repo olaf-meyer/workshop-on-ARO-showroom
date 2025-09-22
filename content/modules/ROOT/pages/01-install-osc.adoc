@@ -29,7 +29,7 @@ There are two ways to install the OSC operator:
 [#cmdline]
 == Using the command line
 
-[source,yaml,role=execute]
+[source,sh,role=execute]
 ----
 oc apply -f-<<EOF
 ---
