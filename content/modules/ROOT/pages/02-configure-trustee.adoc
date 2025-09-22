@@ -31,7 +31,7 @@ DOMAIN=$(oc get ingress.config/cluster -o jsonpath='{.spec.domain}')
 NS=trustee-operator-system
 ROUTE_NAME=kbs-service
 
-CN_NAME=my_trustee
+CN_NAME=kbs-trustee-operator-system
 ORG_NAME=my_org
 
 ROUTE="${ROUTE_NAME}-${NS}.${DOMAIN}"
