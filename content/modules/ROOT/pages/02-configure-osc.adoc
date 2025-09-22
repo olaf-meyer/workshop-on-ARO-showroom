@@ -172,23 +172,15 @@ Keep in mind that restarting the daemonset recreates the peer pods, it does not 
 == Create the peer-pods SSH key
 When CoCo mode is disabled (so the VM is not confidential), this key is also useful to enter the pod VM, inspect it and debug. In CoCo, ssh into the VM is disabled by default. We need to create it anyways because an SSH key is required to create Azure VMs, but as we will see, it will be discarded immediately.
 
-. Create an ssh key:
-+
 [source,sh,role=execute]
 ----
+# Create key
 ssh-keygen -f ./id_rsa -N ""
-----
 
-. Upload `id_rsa.pub` as `Secret` into Openshift.
-+
-[source,sh,role=execute]
-----
+# Upload it into openshift as secret
 oc create secret generic ssh-key-secret -n openshift-sandboxed-containers-operator --from-file=id_rsa.pub=./id_rsa.pub
-----
-. Once the public key is uploaded, delete both private and public from the local setup.
-+
-[source,sh,role=execute]
-----
+
+# Destroy the key, it's not needed
 shred --remove id_rsa.pub id_rsa
 ----
 
