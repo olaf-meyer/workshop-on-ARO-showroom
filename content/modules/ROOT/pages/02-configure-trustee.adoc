@@ -746,7 +746,7 @@ oc create secret generic $SECRET_NAME \
 
 Note that `kbsres1` will be later used in the xref:02-configure-trustee.adoc#trustee-kbsconfig[KbsConfig]
 
-Now, prepare the `key2` sealed secret. Note that this secret is uploaded where the CoCo pod will run, **not** in the Trustee/OSC namespace, as it will be used directly by the CoCo pod:
+Now, prepare the `key2` sealed secret. Note that this secret is uploaded in the namespace where the CoCo pod will run (`default`), **not** in the Trustee/OSC namespace, as it will be used directly by the CoCo pod:
 
 [source,sh,role=execute]
 ----
