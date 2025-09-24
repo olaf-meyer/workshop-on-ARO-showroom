@@ -324,7 +324,8 @@ ExecProcessRequest if {
 # Add allowed commands for exec
 policy_data := {
   "allowed_commands": [
-        "curl -s http://127.0.0.1:8006/cdh/resource/default/kbsres1/key1"
+        "curl -s http://127.0.0.1:8006/cdh/resource/default/kbsres1/key1",
+        "cat /sealed/secret-value/key2"
   ]
 }
 
@@ -342,7 +343,7 @@ Under `policy.rego`, you can specify a custom Kata Agent policy. The default pol
 
 In this demo, we try something a bit more advanced: in order to securely allow the user to manually perform attestation, we restrict the `exec` commands to only allow the secret fetching, and nothing else. `allowed_commands` defines the only commands allowed to be exec'ed into the CoCo pod.
 
-What the above means is that the defined command to `curl` `key1` will work, but **any** other command will fail. Even `oc exec -it pods/your_pod -- curl http://127.0.0.1:8006/cdh/resource/default/kbsres1/key2` will not work.
+What the above means is that the defined command to `curl key1` and `cat /sealed/secret-value/key2` will work, but **any** other command will fail. Even `oc exec -it pods/your_pod -- curl http://127.0.0.1:8006/cdh/resource/default/kbsres1/key2` will not work.
 
 This is extremely useful if the pod has to provide restricted access to an untrusted actor (admin, developer) to for example debug the application logic inside the Confidential Container.
 
@@ -718,7 +719,14 @@ Populate Trustee with secret(s) that are then managed by the above policies and 
 
 Define secret name and values. In this example, the `kbsres1` secret has two entries (`key1`, `key2`), which the clients retrieve. You can add additional secrets according to your requirements by using the same format.
 
-Create the key first:
+For the purpose of this workshop, we will show how to retrieve the key in two ways:
+
+1. `key1` will be retrieved via lazy attestation, meaning the application has to retrieve it itself by connecting with the **internal** guest components (the container does not need to know the Trustee address!)
+2. `key2` will be retireved via a sealed secret, meaning which allows to load confidential information in the untrusted OCP environment. What this means is that the OCP sealed secret will simply be a pointer to the desired `key2` stored in Trustee, and once the container starts, the CoCo guest components will automatically perform attestation with the Trustee, retrieve the key and load it into a specified volume.
+
+More info on this in the xref:03-deploy-workload.adoc#example[example section].
+
+Create what will be uploaded as `key2`:
 [source,sh,role=execute]
 ----
 openssl rand 128 > key.bin
@@ -728,13 +736,24 @@ We will add `key1` as a simple string containing the text `Confidential_Secret!`
 
 [source,sh,role=execute]
 ----
-oc create secret generic kbsres1 \
+SECRET_NAME=kbsres1
+
+oc create secret generic $SECRET_NAME \
   --from-literal key1=Confidential_Secret! \
   --from-file key2=key.bin \
   -n trustee-operator-system
 ----
 
 Note that `kbsres1` will be later used in the xref:02-configure-trustee.adoc#trustee-kbsconfig[KbsConfig]
+
+Now, prepare the `key2` sealed secret:
+
+[source,sh,role=execute]
+----
+SECRET=$(podman run -it quay.io/confidential-devhub/coco-tools:0.3.0 /tools/secret seal vault --resource-uri kbs:///default/${SECRET_NAME}/key2 --provider kbs | grep -v "Warning")
+
+oc create secret generic sealed-secret --from-literal=key2=$SECRET -n default
+----
 
 [#trustee-kbsconfig]
 == Create the KbsConfig custom resource
@@ -760,7 +779,7 @@ spec:
   kbsAuthSecretName: kbs-auth-public-key
   kbsDeploymentType: AllInOneDeployment
   kbsRvpsRefValuesConfigMapName: rvps-reference-values
-  kbsSecretResources: ["kbsres1", "security-policy", "attestation-token", "$SIGNATURE_SECRET_NAME"]
+  kbsSecretResources: ["$SECRET_NAME", "security-policy", "attestation-token", "$SIGNATURE_SECRET_NAME"]
   kbsResourcePolicyConfigMapName: resource-policy
   kbsAttestationPolicyConfigMapName: attestation-policy
   kbsHttpsKeySecretName: kbs-https-key
