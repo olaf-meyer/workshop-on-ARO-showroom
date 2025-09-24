@@ -401,7 +401,10 @@ IMAGE=$(oc get csv -n openshift-sandboxed-containers-operator -o yaml \
   | grep RELATED_IMAGE_PODVM_OCI -A1 \
   | awk '/value:/ {print $2}')
 
-oc get -n openshift-config secret/pull-secret -ojson | jq -r '.data.".dockerconfigjson"' | base64 -d | jq '.' >cluster-pull-secret.json
+oc get -n openshift-config secret/pull-secret -o json \
+| jq -r '.data.".dockerconfigjson"' \
+| base64 -d \
+| jq '.' > cluster-pull-secret.json
 
 # On the ARO workshop, we don't have enough space for podman.
 # Use a different folder.
