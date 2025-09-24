@@ -411,7 +411,7 @@ sudo chown azure:azure /podvm
 # 2. Download the measurements
 podman pull --root /podvm --authfile cluster-pull-secret.json $IMAGE
 
-cid=$(podman create --root /podvm --entrypoint /bin/true registry.redhat.io/openshift-sandboxed-containers/osc-dm-verity-image@sha256:10431be6ef7be6da1b5749bbf5e6207db92804d3530605b825c0e0d98bd9f46e)
+cid=$(podman create --root /podvm --entrypoint /bin/true $IMAGE)
 echo "CID ${cid}"
 podman unshare --root /podvm sh -c '
   mnt=$(podman mount --root /podvm '"$cid"')
