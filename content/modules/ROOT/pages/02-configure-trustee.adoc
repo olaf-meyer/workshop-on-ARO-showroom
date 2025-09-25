@@ -729,7 +729,9 @@ More info on this in the xref:03-deploy-workload.adoc#example[example section].
 Create what will be uploaded as `key2`:
 [source,sh,role=execute]
 ----
-openssl rand 128 > key.bin
+echo "This is my super secret key!" > key.bin
+# Alternatively:
+# openssl rand 128 > key.bin
 ----
 
 We will add `key1` as a simple string containing the text `Confidential_Secret!`, and `key2` as `key.bin`.
