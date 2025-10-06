@@ -33,11 +33,6 @@ You can assume that **everything running in the trustee-operator-system namespac
 
 Let's start with installing Trustee and setting it up. In CoCo, connecting Trustee with OSC is mandatory because as we will see later, before even booting a container OSC asks Trustee to verify the container image signature (even if the signature verification is in permissive mode in Trustee). Therefore it is imperative that Trustee is up and running before OSC is fully configured. We will then install OSC and test our first Confidential Container!
 
-<!-- There are two ways to install the Trustee operator:
-
-* xref:01-install-trustee.adoc#tcmdline[Install the operator using the command line]
-* xref:01-install-trustee.adoc#twebui[Install the operator using the web interface] -->
-
 [#tcmdline]
 == Install via command line
 
@@ -87,36 +82,3 @@ NAME                      DISPLAY                            VERSION   REPLACES 
 trustee-operator.v0.4.1   confidential compute attestation   0.4.1                Succeeded
 ----
 
-<!--
-[#twebui]
-== Using the web interface
-
-. In the Openshift Container Platform web console, navigate to **Operators > OperatorHub**.
-
-. In the **Filter by keyword field**, type `trustee`.
-
-. Click on the **confidential compute attestation** tile.
-+
-image::01-trustee-operatorhub-ui.png[link=self, window=blank]
-
-. On the **Install Operator** page, select **stable** from the list of available **Update Channel** options.
-+
-image::02-trustee-install-ui.png[link=self, window=blank]
-
-. Verify that **Operator recommended Namespace** is selected for **Installed Namespace**. This installs the Operator in the mandatory trustee-operator-system namespace. If this namespace does not yet exist, it is automatically created.
-
-NOTE: Attempting to install the Trustee Operator in a namespace other than `trustee-operator-system` causes the installation to fail.
-
-. Verify that **Automatic** is selected for **Update approval**. **Automatic** is the default value, and enables automatic updates to Trustee when a new z-stream release is available.
-
-. Click **Install**.
-
-The Trustee Operator is now installed on your cluster.
-
-=== Verification
-
-. Navigate to **Operators > Installed Operators**.
-
-. Verify that the Trustee Operator is displayed.
-+
-image::03-trustee-install-ui.png[link=self, window=blank] -->

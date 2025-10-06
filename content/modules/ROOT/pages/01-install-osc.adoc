@@ -21,11 +21,6 @@ To summarize, a Confidential Container on ARO is simply a container running in a
 
 After setting up the Trustee operator, in this chapter we are going to set up OSC to enable CoCo.
 
-<!-- There are two ways to install the OSC operator:
-
-* xref:01-install-osc.adoc#cmdline[Install the operator using the command line]
-* xref:01-install-osc.adoc#webui[Install the operator using the web interface] -->
-
 [#cmdline]
 == Install via command line
 
@@ -74,39 +69,3 @@ watch oc get csv -n openshift-sandboxed-containers-operator
 NAME                             DISPLAY                                  VERSION             REPLACES                   PHASE
 openshift-sandboxed-containers   openshift-sandboxed-containers-operator  1.10.1                                          Succeeded
 ----
-
-<!--
-[#webui]
-== Using the web interface
-
-. In the Openshift Container Platform web console, navigate to **Operators > OperatorHub**.
-
-. In the **Filter by keyword field**, type `Openshift sandboxed containers`.
-
-. Click on the **Openshift sandboxed containers Operator** tile.
-+
-image::01-operatorhub-ui.png[link=self, window=blank]
-
-. On the **Install Operator** page, select **stable** from the list of available **Update Channel** options.
-+
-image::02-install-ui.png[link=self, window=blank]
-
-. Verify that **Operator recommended Namespace** is selected for **Installed Namespace**. This installs the Operator in the mandatory openshift-sandboxed-containers-operator namespace. If this namespace does not yet exist, it is automatically created.
-
-NOTE: Attempting to install the Openshift sandboxed containers Operator in a namespace other than `openshift-sandboxed-containers-operator` causes the installation to fail.
-
-. Verify that **Automatic** is selected for **Update approval**. **Automatic** is the default value, and enables automatic updates to Openshift sandboxed containers when a new z-stream release is available.
-
-. Click **Install**.
-+
-image::03-install-ui.png[link=self, window=blank]
-
-The Openshift sandboxed containers Operator is now installed on your cluster.
-
-=== Verification
-
-. Navigate to **Operators > Installed Operators**.
-
-. Verify that the Openshift sandboxed containers Operator is displayed.
-+
-image::04-install-ui.png[link=self, window=blank] -->
