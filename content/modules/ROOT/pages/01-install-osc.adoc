@@ -21,13 +21,13 @@ To summarize, a Confidential Container on ARO is simply a container running in a
 
 After setting up the Trustee operator, in this chapter we are going to set up OSC to enable CoCo.
 
-There are two ways to install the OSC operator:
+<!-- There are two ways to install the OSC operator:
 
 * xref:01-install-osc.adoc#cmdline[Install the operator using the command line]
-* xref:01-install-osc.adoc#webui[Install the operator using the web interface]
+* xref:01-install-osc.adoc#webui[Install the operator using the web interface] -->
 
 [#cmdline]
-== Using the command line
+== Install via command line
 
 [source,sh,role=execute]
 ----
@@ -65,7 +65,7 @@ EOF
 Ensure that the Operator is correctly installed by running the following command and checking that the `PHASE` is in `Succeeded` state:
 [source,sh,role=execute]
 ----
-oc get csv -n openshift-sandboxed-containers-operator
+watch oc get csv -n openshift-sandboxed-containers-operator
 ----
 
 **Example output**
@@ -75,6 +75,7 @@ NAME                             DISPLAY                                  VERSIO
 openshift-sandboxed-containers   openshift-sandboxed-containers-operator  1.10.1                                          Succeeded
 ----
 
+<!--
 [#webui]
 == Using the web interface
 
@@ -108,4 +109,4 @@ The Openshift sandboxed containers Operator is now installed on your cluster.
 
 . Verify that the Openshift sandboxed containers Operator is displayed.
 +
-image::04-install-ui.png[link=self, window=blank]
+image::04-install-ui.png[link=self, window=blank] -->

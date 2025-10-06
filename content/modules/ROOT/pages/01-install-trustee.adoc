@@ -33,12 +33,13 @@ You can assume that **everything running in the trustee-operator-system namespac
 
 Let's start with installing Trustee and setting it up. In CoCo, connecting Trustee with OSC is mandatory because as we will see later, before even booting a container OSC asks Trustee to verify the container image signature (even if the signature verification is in permissive mode in Trustee). Therefore it is imperative that Trustee is up and running before OSC is fully configured. We will then install OSC and test our first Confidential Container!
 
-There are two ways to install the Trustee operator:
+<!-- There are two ways to install the Trustee operator:
 
 * xref:01-install-trustee.adoc#tcmdline[Install the operator using the command line]
-* xref:01-install-trustee.adoc#twebui[Install the operator using the web interface]
+* xref:01-install-trustee.adoc#twebui[Install the operator using the web interface] -->
+
 [#tcmdline]
-== Using the command line
+== Install via command line
 
 [source,sh,role=execute]
 ----
@@ -76,7 +77,7 @@ EOF
 Ensure that the Operator is correctly installed by running the following command and checking that the `PHASE` is in `Succeeded` state:
 [source,sh,role=execute]
 ----
-oc get csv -n trustee-operator-system
+watch oc get csv -n trustee-operator-system
 ----
 
 **Example output**
@@ -86,6 +87,7 @@ NAME                      DISPLAY                            VERSION   REPLACES 
 trustee-operator.v0.4.1   confidential compute attestation   0.4.1                Succeeded
 ----
 
+<!--
 [#twebui]
 == Using the web interface
 
@@ -117,4 +119,4 @@ The Trustee Operator is now installed on your cluster.
 
 . Verify that the Trustee Operator is displayed.
 +
-image::03-trustee-install-ui.png[link=self, window=blank]
+image::03-trustee-install-ui.png[link=self, window=blank] -->

@@ -2,9 +2,13 @@
 
 * xref:01-install-trustee.adoc[1. Install the Trustee operator]
 ** xref:01-install-trustee.adoc#tcmdline[Command line]
-** xref:01-install-trustee.adoc#twebui[Web UI]
+<!-- ** xref:01-install-trustee.adoc#twebui[Web UI] -->
 
-* xref:02-configure-trustee.adoc[2. Configure the Trustee operator]
+* xref:01-install-osc.adoc[2. Install the OSC operator]
+** xref:01-install-osc.adoc#cmdline[Command line]
+<!-- ** xref:01-install-osc.adoc#webui[Web UI] -->
+
+* xref:02-configure-trustee.adoc[3. Configure the Trustee operator]
 ** xref:02-configure-trustee.adoc#trustee-keys[Create the required keys]
 ** xref:02-configure-trustee.adoc#trustee-route[Create the route]
 ** xref:02-configure-trustee.adoc#trustee-secret[Create the Trustee authentication secret]
@@ -19,11 +23,6 @@
 *** xref:02-configure-trustee.adoc#trustee-rap[Resource access policy]
 ** xref:02-configure-trustee.adoc#trustee-key[Add a secret to Trustee]
 ** xref:02-configure-trustee.adoc#trustee-kbsconfig[Create the KbsConfig custom resource]
-
-
-* xref:01-install-osc.adoc[3. Install the OSC operator]
-** xref:01-install-osc.adoc#cmdline[Command line]
-** xref:01-install-osc.adoc#webui[Web UI]
 
 * xref:02-configure-osc.adoc[4. Configure the OSC operator]
 ** xref:02-configure-osc.adoc#feature-gate[Create the feature gate]

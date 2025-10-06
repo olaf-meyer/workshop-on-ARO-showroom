@@ -33,6 +33,4 @@ All blogposts are under this https://www.redhat.com/en/blog/learn-about-confiden
 ** *Username:* {aro_kube_username}
 ** *Password:* {aro_kube_password}
 
-**Next:** This workshop follows a different approach from the official documentation, and in order to set up the whole system for CoCo only once, we recommend starting with Trustee installation and configuration. Only then we can configure OSC to interface directly with Trustee.
-
 If you are running this workshop from an Azure self managed OCP cluster, note that there are very small tweaks to follow, but they are too documented in this guide.
