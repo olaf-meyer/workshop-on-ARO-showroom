@@ -631,24 +631,36 @@ Create `security-policy-config.json`. Specify the container `registry/image` in 
 SECURITY_POLICY_TRANSPORT=docker
 SECURITY_POLICY_IMAGE=quay.io/confidential-devhub/signed-hello-openshift
 
+# TODO: this doesn't work for now!
+#cat > security-policy-config.json <<EOF
+#{
+#  "default": [
+#      {
+#      "type": "reject"
+#      }
+#  ],
+#  "transports": {
+#      "$SECURITY_POLICY_TRANSPORT": {
+#          "$SECURITY_POLICY_IMAGE":
+#          [
+#              {
+#                  "type": "sigstoreSigned",
+#                  "keyPath": "kbs:///default/$SIGNATURE_SECRET_NAME/$SIGNATURE_SECRET_FILE"
+#              }
+#          ]
+#      }
+#  }
+#}
+#EOF
+
 cat > security-policy-config.json <<EOF
 {
   "default": [
       {
-      "type": "reject"
+      "type": "insecureAcceptAnything"
       }
   ],
-  "transports": {
-      "$SECURITY_POLICY_TRANSPORT": {
-          "$SECURITY_POLICY_IMAGE":
-          [
-              {
-                  "type": "sigstoreSigned",
-                  "keyPath": "kbs:///default/$SIGNATURE_SECRET_NAME/$SIGNATURE_SECRET_FILE"
-              }
-          ]
-      }
-  }
+  "transports": {}
 }
 EOF
 
