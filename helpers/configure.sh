@@ -820,3 +820,8 @@ echo "################################################"
 sleep 10
 
 wait_for_sandboxed_containers_jobs
+
+clear
+echo "################################################"
+echo "Configuration complete. Enjoy testing CoCo!"
+echo "################################################"
