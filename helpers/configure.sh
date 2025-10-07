@@ -1,6 +1,92 @@
 #! /bin/bash
 set -e
 
+function wait_for_deployment() {
+    local deployment=$1
+    local namespace=$2
+    local timeout=300
+    local interval=5
+    local elapsed=0
+    local ready=0
+
+    while [ $elapsed -lt $timeout ]; do
+        ready=$(oc get deployment -n "$namespace" "$deployment" -o jsonpath='{.status.readyReplicas}')
+        if [ "$ready" == "1" ]; then
+            echo "Operator $deployment is ready"
+            return 0
+        fi
+        sleep $interval
+        elapsed=$((elapsed + interval))
+    done
+    echo "Operator $deployment is not ready after $timeout seconds"
+    return 1
+}
+
+oc apply -f-<<EOF
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: trustee-operator-system
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: trustee-operator-group
+  namespace: trustee-operator-system
+spec:
+  targetNamespaces:
+  - trustee-operator-system
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: trustee-operator
+  namespace: trustee-operator-system
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: trustee-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+
+wait_for_deployment trustee-operator-controller-manager trustee-operator-system || exit 1
+
+oc apply -f-<<EOF
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-sandboxed-containers-operator
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: openshift-sandboxed-containers-operator
+  namespace: openshift-sandboxed-containers-operator
+spec:
+  targetNamespaces:
+  - openshift-sandboxed-containers-operator
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: openshift-sandboxed-containers-operator
+  namespace: openshift-sandboxed-containers-operator
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: sandboxed-containers-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+
+wait_for_deployment controller-manager openshift-sandboxed-containers-operator || exit 1
+
+####################################################################
+echo "################################################"
+
 mkdir -p trustee
 cd trustee
 
