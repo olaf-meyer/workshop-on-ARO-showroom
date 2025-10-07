@@ -21,6 +21,16 @@ This is the user guide. In this setup, we will automatically install and configu
 
 All you need to do is download this script, and let it run till it finishes.
 
+The following scripts sets everything just as in the xref:admin::index.adoc[admin guide], with the exception that the **container signature policy accepts any image**.
+
+[source,sh,role=execute]
+----
+curl -L https://raw.githubusercontent.com/confidential-devhub/workshop-on-ARO-showroom/refs/heads/main/helpers/configure.sh -o configure.sh
+
+chmod +x configure.sh
+
+./configure.sh
+----
 
 
 Now that the configuration is complete, let's run some example!
