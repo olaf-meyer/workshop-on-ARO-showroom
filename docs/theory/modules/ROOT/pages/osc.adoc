@@ -1,0 +1,20 @@
+= The Openshift sandboxed containers operator
+
+Openshift sandboxed containers support for Red Hat Openshift provides you with built-in support for running Kata Containers as an additional optional runtime. The new runtime supports containers in dedicated virtual machines (VMs), providing improved workload isolation. This is particularly useful for performing the following tasks:
+
+* Run privileged or untrusted workloads
+* Ensure isolation for sensitive workloads
+* Ensure kernel isolation for each workload
+* Share the same workload across tenants
+* Ensure proper isolation and sandboxing for testing software
+* Ensure default resource containment through VM boundaries
+
+Please refer to https://docs.redhat.com/en/documentation/openshift_sandboxed_containers[Openshift sandboxed containers official documentation, window=blank] for more information.
+
+When runnig on Openshift cluster deployed on cloud, OSC is capable of deploying containers using the **peer-pods** technology.
+
+The peer-pods solution extends Red Hat Openshift sandboxed containers (OSC) to run on any environment without requiring bare-metal servers or nested virtualization support. It does this by extending Kata containers runtime (which OSC is built on) to handle VM lifecycle management using cloud provider APIs (AWS, Azure, etc...) or third-party hypervisors APIs (such as VMware vSphere). More info on the peer pods solution is available https://www.redhat.com/en/blog/red-hat-openshift-sandboxed-containers-peer-pods-solution-overview[here, window=blank].
+
+Together with its full integration with Trustee, and the support of hardware TEE, the OSC operator is capable of offering the **Confidential Containers (CoCo)** technology on ARO.
+
+To summarize, a Confidential Container on ARO is simply a container running in a Confidential VM backed up by TEE hardware and set up using the peer-pods technology. The Confidential VM runs RHEL and it contains components to automatically connect with Trustee and perform attestation.

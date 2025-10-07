@@ -1,0 +1,12 @@
+name: theory
+title: Understanding Confidential Containers - Theory
+version: master
+start_page: ROOT:index.adoc
+nav:
+  - modules/ROOT/nav.adoc
+
+asciidoc:
+  attributes:
+    lab_name: "Understanding Confidential Containers - Theory"
+    release-version: master
+    page-pagination: true

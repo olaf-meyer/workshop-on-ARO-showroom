@@ -6,6 +6,8 @@ Now you have successfully learned how to install and set up the **Openshift sand
 
 If you have any question or are interested to know more about OSC, Trustee or CoCo, please feel free to ping us on `#forum-sandboxed-containers` on the Slack Red Hat workspace!
 
+If you want to run some more interesting use case, feel free to check the xref:user::index.adoc[user guide].
+
 If you are interested on more demos/POCs that are in progress, here are some interesting blogposts:
 
 * https://www.redhat.com/en/blog/secure-ai-inferencing-poc-nvidia-nim-coco-openshift-ai[Secure AI inferencing: POC with NVIDIA NIM on CoCo with OpenShift AI, window=blank]
@@ -17,4 +19,4 @@ If you are interested on more demos/POCs that are in progress, here are some int
 
 **Thank you for taking the time to explore CoCo!**
 
-For any feedback on this workshop, please write an email to eesposit@redhat.com or submit an Issue/Pull request to https://github.com/esposem/osc-demo-showroom[our OSC lab github repository, window=blank].
+For any feedback on this workshop, please write an email to eesposit@redhat.com or submit an Issue/Pull request to https://github.com/confidential-devhub/workshop-on-ARO-showroom[our workshop github repository, window=blank].

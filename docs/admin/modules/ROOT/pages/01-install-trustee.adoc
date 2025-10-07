@@ -1,8 +1,5 @@
 = Install the Trustee operator
 
-IMPORTANT: In this workshop, we will install Trustee in the **same cluster** that hosts OSC and therefore Confidential Containers. **This is not a suitable solution for production environments.**
-Because the Trustee operator contains the refernce values and secrets that are necessary to enstablish the if a Confidential Container is running in a truly safe environment, it should be installed in a separate cluster running in a trusted environment (on prem, for example). Because of the limitations of this ARO workshop, it is not possible to set up two clusters. You can assume that **everything running in the trustee-operator-system namespace should run in a trusted, separate environment**.
-
 Let's start with installing Trustee and setting it up.
 
 [#tcmdline]
