@@ -65,6 +65,46 @@ function wait_for_mcp() {
 
 }
 
+wait_for_sandboxed_containers_jobs() {
+  # --- Configuration ---
+  local namespace="openshift-sandboxed-containers-operator"
+  local timeout_seconds=900 # 10 minutes
+  local interval_seconds=15 # Check every 15 seconds
+
+  local end_time=$((SECONDS + timeout_seconds))
+
+  echo "Waiting up to $timeout_seconds seconds for the job in namespace '${namespace}' to complete..."
+
+  while [ $SECONDS -lt $end_time ]; do
+    # Get the "COMPLETIONS" column for the job in the namespace.
+    # This simplified version assumes there is only one job.
+    # The `2>/dev/null` suppresses errors if the job doesn't exist yet.
+    local job_status
+    job_status=$(oc get jobs -n "${namespace}" --no-headers 2>/dev/null | awk '{print $2}')
+
+    # Check if a job was found
+    if [ -z "$job_status" ]; then
+      echo "No job found in namespace '${namespace}' yet. Retrying in ${interval_seconds}s..."
+      sleep "$interval_seconds"
+      continue
+    fi
+
+    # Check if the job has completed (status is "1/1")
+    if [[ "${job_status}" == "1/1" ]]; then
+      echo "Success! The job in namespace '${namespace}' is completed."
+      oc get jobs -n "${namespace}" # Display final status
+      return 0
+    fi
+
+    # Provide a status update and wait before the next check
+    echo "Waiting for job completion. Current status: ${job_status}. Retrying in ${interval_seconds}s..."
+    sleep "$interval_seconds"
+  done
+
+  echo "Error: Timeout of $timeout_seconds seconds reached."
+  echo "The job in namespace '${namespace}' did not complete in time:"
+  oc get jobs -n "${namespace}"
+}
 
 
 oc apply -f-<<EOF
@@ -777,4 +817,6 @@ wait_for_runtimeclass kata-remote || exit 1
 ####################################################################
 echo "################################################"
 
-watch oc get jobs -n openshift-sandboxed-containers-operator
+sleep 10
+
+wait_for_sandboxed_containers_jobs
