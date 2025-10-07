@@ -1,0 +1,6 @@
+= {lab_name}
+
+Choose a guide to get started:
+
+* See the documentation for xref:admin::index.adoc[Admin Guide].
+* See the documentation for xref:user::index.adoc[User Guide].

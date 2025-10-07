@@ -1,0 +1,21 @@
+name: modules
+title: Understanding Confidential Containers - Workshop on ARO
+version: master
+start_page: ROOT:index.adoc
+nav:
+  - modules/ROOT/nav.adoc
+
+asciidoc:
+  attributes:
+    lab_name: "Understanding Confidential Containers - Workshop on ARO"
+    release-version: master
+    page-pagination: true
+    aro_console: https://placehoder_openshift_web_console
+    azure_resource_group: insert_your_rg_here
+    aro_kube_username: kubeadmin
+    aro_kube_password: insert_your_pw_here
+    guid: insert-your-guid-here
+    azure_service_principal_id: insert_your_sp_here
+    azure_service_principal_password: insert_your_sppw_here
+    azure_tenant_id: insert_your_tid_here
+    azure_subscription: insert_your_sub_here
