@@ -22,6 +22,51 @@ function wait_for_deployment() {
     return 1
 }
 
+function wait_for_runtimeclass() {
+
+    local runtimeclass=$1
+    local timeout=900
+    local interval=5
+    local elapsed=0
+    local ready=0
+
+    # oc get runtimeclass "$runtimeclass" -o jsonpath={.metadata.name} should return the runtimeclass
+    while [ $elapsed -lt $timeout ]; do
+        ready=$(oc get runtimeclass "$runtimeclass" -o jsonpath='{.metadata.name}')
+        if [ "$ready" == "$runtimeclass" ]; then
+            echo "Runtimeclass $runtimeclass is ready"
+            return 0
+        fi
+        sleep $interval
+        elapsed=$((elapsed + interval))
+    done
+
+    echo "Runtimeclass $runtimeclass is not ready after $timeout seconds"
+    return 1
+}
+
+function wait_for_mcp() {
+    local mcp=$1
+    local timeout=900
+    local interval=5
+    local elapsed=0
+    local ready=0
+    while [ $elapsed -lt $timeout ]; do
+        if [ "$statusUpdated" == "True" ] && [ "$statusUpdating" == "False" ] && [ "$statusDegraded" == "False" ]; then
+            echo "MCP $mcp is ready"
+            return 0
+        fi
+        sleep $interval
+        elapsed=$((elapsed + interval))
+        statusUpdated=$(oc get mcp "$mcp" -o=jsonpath='{.status.conditions[?(@.type=="Updated")].status}')
+        statusUpdating=$(oc get mcp "$mcp" -o=jsonpath='{.status.conditions[?(@.type=="Updating")].status}')
+        statusDegraded=$(oc get mcp "$mcp" -o=jsonpath='{.status.conditions[?(@.type=="Degraded")].status}')
+    done
+
+}
+
+
+
 oc apply -f-<<EOF
 ---
 apiVersion: v1
@@ -718,7 +763,16 @@ EOF
 
 cat kataconfig.yaml
 oc apply -f kataconfig.yaml
-watch oc get mcp/kata-oc
+
+sleep 10
+
+wait_for_mcp kata-oc || exit 1
+
+# Wait for runtimeclass kata to be ready
+wait_for_runtimeclass kata || exit 1
+
+# Wait for runtimeclass kata-remote to be ready
+wait_for_runtimeclass kata-remote || exit 1
 
 ####################################################################
 echo "################################################"
