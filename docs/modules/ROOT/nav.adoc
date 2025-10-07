@@ -1,1 +1,4 @@
 * xref:index.adoc[Introduction]
+** xref:theory::index.adoc[Theory]
+** xref:admin::index.adoc[Admin guide]
+** xref:user::index.adoc[User guide]

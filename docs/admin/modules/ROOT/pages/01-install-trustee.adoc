@@ -1,6 +1,6 @@
 = Install the Trustee operator
 
-Let's start with installing Trustee and setting it up.
+Let's start with installing Trustee.
 
 [#tcmdline]
 == Install via command line
