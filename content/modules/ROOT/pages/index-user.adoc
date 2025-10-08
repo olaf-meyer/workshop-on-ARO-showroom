@@ -1,4 +1,4 @@
-= {lab_name}
+= User guide
 
 This is the user guide. In this setup, we will automatically install and configure the operators. After that, we will run an example.
 
@@ -21,7 +21,7 @@ This is the user guide. In this setup, we will automatically install and configu
 
 All you need to do is download this script, and let it run till it finishes.
 
-The following scripts sets everything just as in the xref:admin::index.adoc[admin guide], with the exception that the **container signature policy accepts any image**.
+The following scripts sets everything just as in the xref:index-admin.adoc[admin guide], with the exception that the **container signature policy accepts any image**.
 
 [source,sh,role=execute]
 ----

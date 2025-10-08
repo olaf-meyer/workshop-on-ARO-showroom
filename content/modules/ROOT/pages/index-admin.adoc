@@ -1,4 +1,4 @@
-= {lab_name}
+= Admin guide
 
 This is the admin guide. In this setup, we will show how to install and configure both operators. We will also explain purpose of such settings.
 

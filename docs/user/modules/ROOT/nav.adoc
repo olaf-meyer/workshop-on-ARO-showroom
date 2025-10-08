@@ -1,4 +1,0 @@
-* xref:modules::index.adoc[Back to Home]
-
-* xref:index.adoc[Introduction]
-* xref:conclusion.adoc[Conclusion and what's next]

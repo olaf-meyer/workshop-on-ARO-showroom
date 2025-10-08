@@ -38,11 +38,11 @@ All blogposts are under this https://www.redhat.com/en/blog/learn-about-confiden
 
 There are three guides:
 
-* The xref:theory::index.adoc[theory], to get an high level overview of what confidential computing is and what are the two operators we are going to use.
+* The xref:index-theory.adoc[theory], to get an high level overview of what confidential computing is and what are the two operators we are going to use.
 
-* The xref:admin::index.adoc[Admin guide], to learn how to install and configure the operators, which configs to set up and why we need such things. This is useful for admins that need to set up the cluster environment.
+* The xref:index-admin.adoc[Admin guide], to learn how to install and configure the operators, which configs to set up and why we need such things. This is useful for admins that need to set up the cluster environment.
 
-* The xref:user::index.adoc[User guide], where both OSC and Trustee will be automatically installed and configured, and what is left to do is just run the confidential container. This is useful for end users that want to experiment CoCo without going into the installation steps.
+* The xref:index-user.adoc[User guide], where both OSC and Trustee will be automatically installed and configured, and what is left to do is just run the confidential container. This is useful for end users that want to experiment CoCo without going into the installation steps.
 
 IMPORTANT: In this workshop, we will install Trustee in the **same cluster** that hosts OSC and therefore Confidential Containers. **This is not a suitable solution for production environments.**
 Because the Trustee operator contains the refernce values and secrets that are necessary to enstablish the if a Confidential Container is running in a truly safe environment, it should be installed in a separate cluster running in a trusted environment (on prem, for example). Because of the limitations of this ARO workshop, it is not possible to set up two clusters. You can assume that **everything running in the trustee-operator-system namespace should run in a trusted, separate environment**.

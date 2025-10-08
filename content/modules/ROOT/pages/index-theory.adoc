@@ -1,4 +1,4 @@
-= {lab_name}
+= Theory
 
 In this section, we will focus on explaining the high level workflow and theory behind these two operators:
 
