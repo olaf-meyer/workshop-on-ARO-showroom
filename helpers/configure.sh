@@ -818,7 +818,15 @@ curl -L https://raw.githubusercontent.com/confidential-devhub/workshop-on-ARO-sh
 chmod +x update-kata-rpm.sh
 ./update-kata-rpm.sh
 
-clear
+echo ""
+echo ""
+echo ""
+echo ""
+echo ""
+echo ""
+echo ""
+echo ""
+
 echo "################################################"
 echo "Configuration complete. Enjoy testing CoCo!"
 echo "################################################"
