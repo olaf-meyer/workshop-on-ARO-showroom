@@ -10,11 +10,15 @@ For details on **attestation flow in Confidential Containers**, read our https:/
 
 To summarize, the workflow of attestation for CoCo is the following: a Confidential Container runs in a confidential virtual machine supported by TEEs (which provide memory encryption), but this is not enough to guarantee full confidentiality of data in use. **Attestation** ensures that the hardware and software running the Confidential Container are not tampered with, and are just "pretending" to do their work. Additionally, in the Trustee workflow, a remote attester doesn't just check if a Confidential Container is running in a safe environment: it also provides "secrets" back to the container **only if** the attestation has been successful.
 
+image::trustee.png[link=self, window=blank]
+
 What is a "secret"? Suppose the container image or the workload (AI model, or a generic binary running in the container) is encrypted. This means that at development phase, in a secure environment, some/all components of the container are encrypted, but the key to decrypt is not embedded inside the container. Therefore running such containers without the key will not even start the application, since all files are encrypted blobs.
 
 The key is instead provided to a remote attester (Trustee operator), which holds it as an Openshift Secret. This secret is sent back to the CoCo pod asking for it **only if** attestation has been successful.
 
 In other words, the workflow is the following:
+
+image::workflow.png[link=self, window=blank]
 
 . A Confidential Container is developed in a secure environment. In addition to the traditional development steps, two additional actions are necessary:
 .. The binary/pod image is encrypted with a secure key, which is **not** embedded inside the container.
