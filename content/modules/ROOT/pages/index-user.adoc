@@ -2,7 +2,7 @@
 
 This is the user guide. In this setup, we will automatically install and configure the operators. After that, we will run an example.
 
-[#credentials]
+[#user-credentials]
 == Setting up the environment
 
 . Go into the terminal on the right and run the following commands:

@@ -5,7 +5,7 @@ Let's first see what we can and must add into the pod yaml to make it run in a V
 
 NOTE: Because of CPU Quota limitations of this ARO subscription, and since each CoCo runs in a Confidential VM, you are just allowed to get **one single CoCo pod** at time. Trying to deploy a second one will result in failure and container stuck in `ContainerCreating` state.
 
-In this section, we will show you two simple examples of how to respectively enable CoCo in a traditional pod and how to perform attestation. Please refer to the xref:04-conclusion.adoc[next section] to learn about more complex examples with AI, gpus, and so on.
+In this section, we will show you two simple examples of how to respectively enable CoCo in a traditional pod and how to perform attestation. Please refer to the xref:conclusion.adoc[conclusion] to learn about more complex examples with AI, gpus, and so on.
 
 [#options]
 == Available options

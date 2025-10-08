@@ -4,7 +4,7 @@ Now that the OSC operator is installed, we need to set it up.
 
 **Prerequisites**
 
-To complete this section, it is mandatory to have all ARO credentials at hand defined in the xref:index.adoc#credentials[introduction], because they will have to be inserted in the various resources that we are going to create.
+To complete this section, it is mandatory to have all ARO credentials at hand defined in the xref:index-admin.adoc#credentials[introduction], because they will have to be inserted in the various resources that we are going to create.
 
 In order to create the xref:02-configure-osc.adoc#pp-cm[peer-pods configmap], it is necessary to have Trustee xref:01-install-trustee.adoc#twebui[installed] and xref:02-configure-trustee.adoc#trustee-route[configured].
 
@@ -95,7 +95,7 @@ echo "ARO_NSG_ID: \"$ARO_NSG_ID\""
 echo "ARO_NAT_ID: \"$ARO_NAT_ID\""
 ----
 
-. Create and apply the `peer-pods-configmap.yaml` ConfigMap. Note that at this point you must have already xref:02-configure-trustee.adoc#trustee-initdata[configured initdata] and got `${INITDATA}`.
+. Create and apply the `peer-pods-configmap.yaml` ConfigMap. Note that at this point you must have already xref:02-configure-trustee.adoc#trustee-initdata[configured initdata] and got `$INITDATA`.
 +
 [source,sh,role=execute]
 ----
@@ -133,7 +133,7 @@ Explanation:
 +
 .. `AZURE_INSTANCE_SIZE`: default instance size, if not specified in the `io.katacontainers.config.hypervisor.machine_type` xref:03-deploy-workload.adoc#optional-options[pod annotation].
 +
-Note the azure terminology for instances: the pattern is usually `Standard_X{C}{num_cpus}{a or e}xx_vx` where `C` stands for **Confidential**, `a` for CPUs using **AMD SEV/SNP** technology, and `e` for CPUs using **Intel TDX** technology. Therefore `Standard_DC4_es_v5` is a confidential instance with 4 Intel CPUs using TDX to provide data in use confidentiality.
+Note the azure terminology for instances: the pattern is usually `Standard_X[C][num_cpus][a or e]xx_vx` where `C` stands for **Confidential**, `a` for CPUs using **AMD SEV/SNP** technology, and `e` for CPUs using **Intel TDX** technology. Therefore `Standard_DC4_es_v5` is a confidential instance with 4 Intel CPUs using TDX to provide data in use confidentiality.
 +
 For this example, we are going to default the instance deployment AMD cpus, because they are available in all regions. If you want to deploy a TDX instance, check the catalog region availability (usually `northeurope` or `westeurope` are a good choice) and deploy a new workshop in that region.
 .. `AZURE_INSTANCE_SIZES`: this is an "allowlist" to restrict the instance types that the pod can actually run. It is especially useful if the OSC setup and pod deployment is done by two different actors, to avoid using extremely expensive instances from being misused.
