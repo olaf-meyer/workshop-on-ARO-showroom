@@ -5,7 +5,7 @@ function wait_for_deployment() {
     local deployment=$1
     local namespace=$2
     local timeout=300
-    local interval=5
+    local interval=25
     local elapsed=0
     local ready=0
 
@@ -61,52 +61,45 @@ function wait_for_mcp() {
         statusUpdated=$(oc get mcp "$mcp" -o=jsonpath='{.status.conditions[?(@.type=="Updated")].status}')
         statusUpdating=$(oc get mcp "$mcp" -o=jsonpath='{.status.conditions[?(@.type=="Updating")].status}')
         statusDegraded=$(oc get mcp "$mcp" -o=jsonpath='{.status.conditions[?(@.type=="Degraded")].status}')
+        echo "MCP $mcp is not yet ready, waiting another $interval seconds"
     done
 
 }
 
-wait_for_sandboxed_containers_jobs() {
-  # --- Configuration ---
-  local namespace="openshift-sandboxed-containers-operator"
-  local timeout_seconds=900 # 10 minutes
-  local interval_seconds=15 # Check every 15 seconds
 
-  local end_time=$((SECONDS + timeout_seconds))
+echo "Checking Azure login status..."
+if az account show; then
+  echo "User is logged into Azure."
+else
+  echo "User is not logged in. Please run 'az login' first."
+  exit 1
+fi
 
-  echo "Waiting up to $timeout_seconds seconds for the job in namespace '${namespace}' to complete..."
+echo ""
 
-  while [ $SECONDS -lt $end_time ]; do
-    # Get the "COMPLETIONS" column for the job in the namespace.
-    # This simplified version assumes there is only one job.
-    # The `2>/dev/null` suppresses errors if the job doesn't exist yet.
-    local job_status
-    job_status=$(oc get jobs -n "${namespace}" --no-headers 2>/dev/null | awk '{print $2}')
+echo "Checking for AZURE_RESOURCE_GROUP..."
+if [[ -n "$AZURE_RESOURCE_GROUP" ]]; then
+  echo "AZURE_RESOURCE_GROUP is set to: '$AZURE_RESOURCE_GROUP'"
+else
+  echo "The AZURE_RESOURCE_GROUP environment variable is not set."
+  echo "   Please set it, for example: export AZURE_RESOURCE_GROUP=\"my-rg-name\""
+  exit 1
+fi
 
-    # Check if a job was found
-    if [ -z "$job_status" ]; then
-      echo "No job found in namespace '${namespace}' yet. Retrying in ${interval_seconds}s..."
-      sleep "$interval_seconds"
-      continue
-    fi
+echo ""
 
-    # Check if the job has completed (status is "1/1")
-    if [[ "${job_status}" == "1/1" ]]; then
-      echo "Success! The job in namespace '${namespace}' is completed."
-      oc get jobs -n "${namespace}" # Display final status
-      return 0
-    fi
+echo "################################################"
+echo "Starting the script. Many of the following commands"
+echo "will periodically check on OCP for operations to"
+echo "complete, so it's normal to see errors."
+echo "If this scripts completes successfully, you will"
+echo "see a final message confirming installation went"
+echo "well."
+echo "################################################"
 
-    # Provide a status update and wait before the next check
-    echo "Waiting for job completion. Current status: ${job_status}. Retrying in ${interval_seconds}s..."
-    sleep "$interval_seconds"
-  done
+echo ""
 
-  echo "Error: Timeout of $timeout_seconds seconds reached."
-  echo "The job in namespace '${namespace}' did not complete in time:"
-  oc get jobs -n "${namespace}"
-}
-
-
+echo "############################ Install Trustee ########################"
 oc apply -f-<<EOF
 ---
 apiVersion: v1
@@ -136,8 +129,10 @@ spec:
   sourceNamespace: openshift-marketplace
 EOF
 
+echo "############################ Wait for Trustee ########################"
 wait_for_deployment trustee-operator-controller-manager trustee-operator-system || exit 1
 
+echo "############################ Install OSC ########################"
 oc apply -f-<<EOF
 ---
 apiVersion: v1
@@ -167,6 +162,7 @@ spec:
   sourceNamespace: openshift-marketplace
 EOF
 
+echo "############################ Wait for OSC ########################"
 wait_for_deployment controller-manager openshift-sandboxed-containers-operator || exit 1
 
 ####################################################################
@@ -804,6 +800,7 @@ EOF
 cat kataconfig.yaml
 oc apply -f kataconfig.yaml
 
+echo "############################ Wait for Kataconfig ########################"
 sleep 10
 
 wait_for_mcp kata-oc || exit 1
@@ -811,15 +808,10 @@ wait_for_mcp kata-oc || exit 1
 # Wait for runtimeclass kata to be ready
 wait_for_runtimeclass kata || exit 1
 
+echo "############################ Wait for kata-remote + job ########################"
+
 # Wait for runtimeclass kata-remote to be ready
 wait_for_runtimeclass kata-remote || exit 1
-
-####################################################################
-echo "################################################"
-
-sleep 10
-
-wait_for_sandboxed_containers_jobs
 
 clear
 echo "################################################"
