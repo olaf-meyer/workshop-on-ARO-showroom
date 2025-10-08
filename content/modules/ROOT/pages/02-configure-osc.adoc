@@ -312,4 +312,20 @@ osc-caa-ds-s6xkk            1/1     Running     0          2m59s
 osc-caa-ds-vkfm5            1/1     Running     0          2m59s
 ----
 
+=== One last thing...
+
+Since this ARO cluster version is old, we need to manually update the kata rpm package inside the worker node. Unfortunately this is a limitation of this workshop.
+
+If you are running this in a newer ARO cluser, you don't have to worry about this.
+
+[source,sh,role=execute]
+----
+curl -L https://raw.githubusercontent.com/confidential-devhub/workshop-on-ARO-showroom/refs/heads/main/helpers/update-kata-rpm.sh -o update-kata-rpm.sh
+
+chmod +x update-kata-rpm.sh
+
+./update-kata-rpm.sh
+----
+
+
 This is it! Now the cluster is ready to run workloads with `kata-remote` `RuntimeClass`!

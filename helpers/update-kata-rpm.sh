@@ -1,6 +1,12 @@
 #! /bin/bash
 
-NODE_NAME=$(oc get nodes -l node-role.kubernetes.io/worker -o jsonpath='{.items[0].metadata.name}')
+NODE_NAME=$(oc get nodes -l node-role.kubernetes.io/kata-oc -o jsonpath='{.items[0].metadata.name}')
+
+if ! oc get node "$NODE_NAME" &> /dev/null; then
+    echo -e "ERROR: No node labeled kata-oc found in the cluster." >&2
+    exit 1
+fi
+
 TEMP_PATH_IN_POD="/host/tmp/$FILENAME"
 wget https://people.redhat.com/eesposit/kata-containers-3.17.0-3.rhaos4.16.el9.x86_64.rpm
 FILE_TO_COPY=kata-containers-3.17.0-3.rhaos4.16.el9.x86_64.rpm
