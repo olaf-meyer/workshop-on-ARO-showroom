@@ -50,7 +50,6 @@ function wait_for_mcp() {
     local timeout=900
     local interval=5
     local elapsed=0
-    local ready=0
     while [ $elapsed -lt $timeout ]; do
         if [ "$statusUpdated" == "True" ] && [ "$statusUpdating" == "False" ] && [ "$statusDegraded" == "False" ]; then
             echo "MCP $mcp is ready"
@@ -64,8 +63,9 @@ function wait_for_mcp() {
         echo "MCP $mcp is not yet ready, waiting another $interval seconds"
     done
 
+    echo "MCP $mcp is not ready after $timeout seconds"
+    return 1
 }
-
 
 echo "Checking Azure login status..."
 if az account show; then
@@ -129,9 +129,6 @@ spec:
   sourceNamespace: openshift-marketplace
 EOF
 
-echo "############################ Wait for Trustee ########################"
-wait_for_deployment trustee-operator-controller-manager trustee-operator-system || exit 1
-
 echo "############################ Install OSC ########################"
 oc apply -f-<<EOF
 ---
@@ -161,6 +158,9 @@ spec:
   source: redhat-operators
   sourceNamespace: openshift-marketplace
 EOF
+
+echo "############################ Wait for Trustee ########################"
+wait_for_deployment trustee-operator-controller-manager trustee-operator-system || exit 1
 
 echo "############################ Wait for OSC ########################"
 wait_for_deployment controller-manager openshift-sandboxed-containers-operator || exit 1
