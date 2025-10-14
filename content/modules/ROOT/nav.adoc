@@ -33,7 +33,7 @@
 *** xref:03-deploy-workload.adoc#options[Available options]
 *** xref:03-deploy-workload.adoc#example[Hello-openshift example]
 *** xref:03-deploy-workload.adoc#verify[Verify the pod is in a VM]
-*** xref:03-deploy-workload.adoc#verify-security[Verify the CoCo pod security *restrictions]
+*** xref:03-deploy-workload.adoc#verify-security[Verify the CoCo pod security restrictions]
 *** xref:03-deploy-workload.adoc#verify-security[Retrieve a secret from Trustee (attestation)]
 *** xref:03-deploy-workload.adoc#destroy[Destroy the hello-openshift pod]
 
