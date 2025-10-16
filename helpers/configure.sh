@@ -689,7 +689,6 @@ data:
   confidential: "true"
 EOF
 
-cat cc-fg.yaml
 oc apply -f cc-fg.yaml
 
 ####################################################################
