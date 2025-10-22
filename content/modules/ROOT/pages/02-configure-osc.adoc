@@ -108,8 +108,8 @@ metadata:
 data:
   CLOUD_PROVIDER: "azure"
   VXLAN_PORT: "9000"
-  AZURE_INSTANCE_SIZES: "Standard_DC4as_v5,Standard_DC4ads_v5,Standard_DC4es_v5,Standard_DC4eds_v5"
-  AZURE_INSTANCE_SIZE: "Standard_DC4as_v5"
+  AZURE_INSTANCE_SIZES: "Standard_DC4as_v5,Standard_DC4es_v5"
+  AZURE_INSTANCE_SIZE: "Standard_DC4es_v5"
   AZURE_RESOURCE_GROUP: "${ARO_RESOURCE_GROUP}"
   AZURE_REGION: "${ARO_REGION}"
   AZURE_SUBNET_ID: "${ARO_WORKER_SUBNET_ID}"
