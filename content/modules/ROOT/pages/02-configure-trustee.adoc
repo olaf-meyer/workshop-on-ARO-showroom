@@ -631,28 +631,6 @@ Create `security-policy-config.json`. Specify the container `registry/image` in 
 SECURITY_POLICY_TRANSPORT=docker
 SECURITY_POLICY_IMAGE=quay.io/confidential-devhub/signed-hello-openshift
 
-# TODO: this doesn't work for now!
-cat > security-policy-config-restrictive.json <<EOF
-{
-  "default": [
-      {
-      "type": "reject"
-      }
-  ],
-  "transports": {
-      "$SECURITY_POLICY_TRANSPORT": {
-          "$SECURITY_POLICY_IMAGE":
-          [
-              {
-                  "type": "sigstoreSigned",
-                  "keyPath": "kbs:///default/$SIGNATURE_SECRET_NAME/$SIGNATURE_SECRET_FILE"
-              }
-          ]
-      }
-  }
-}
-EOF
-
 cat > security-policy-config.json <<EOF
 {
   "default": [
@@ -667,8 +645,6 @@ EOF
 clear
 cat security-policy-config.json
 ----
-+
-IMPORTANT: Note how we set `reject` as a `default` global policy. As explained above, this forbids any other non-specified image from being run. Change it in `insecureAcceptAnything` if you want to allow also unsigned images. If you don't care at all about container policy, leave `insecureAcceptAnything` and ensure `"transports": {}"`.
 +
 For more information on security policy, see https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md[containers-policy.json.5, window=blank] and in particular https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md#a-reasonably-locked-down-system[this example, =window=blank].
 
