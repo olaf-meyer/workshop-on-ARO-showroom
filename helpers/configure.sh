@@ -1,6 +1,9 @@
 #! /bin/bash
 set -e
 
+#sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm -y
+#sudo dnf install screen -y
+
 function wait_for_deployment() {
     local deployment=$1
     local namespace=$2
@@ -15,6 +18,7 @@ function wait_for_deployment() {
             echo "Operator $deployment is ready"
             return 0
         fi
+        echo "Operator $deployment is not yet ready, waiting another $interval seconds"
         sleep $interval
         elapsed=$((elapsed + interval))
     done
@@ -26,17 +30,19 @@ function wait_for_runtimeclass() {
 
     local runtimeclass=$1
     local timeout=900
-    local interval=5
+    local interval=60
     local elapsed=0
     local ready=0
 
     # oc get runtimeclass "$runtimeclass" -o jsonpath={.metadata.name} should return the runtimeclass
+    echo "Runtimeclass $runtimeclass is not yet ready, waiting another $interval seconds"
     while [ $elapsed -lt $timeout ]; do
         ready=$(oc get runtimeclass "$runtimeclass" -o jsonpath='{.metadata.name}')
         if [ "$ready" == "$runtimeclass" ]; then
             echo "Runtimeclass $runtimeclass is ready"
             return 0
         fi
+        echo "Runtimeclass $runtimeclass is not yet ready, waiting another $interval seconds"
         sleep $interval
         elapsed=$((elapsed + interval))
     done
@@ -48,8 +54,9 @@ function wait_for_runtimeclass() {
 function wait_for_mcp() {
     local mcp=$1
     local timeout=900
-    local interval=5
+    local interval=30
     local elapsed=0
+    echo "MCP $mcp is not yet ready, waiting another $interval seconds"
     while [ $elapsed -lt $timeout ]; do
         if [ "$statusUpdated" == "True" ] && [ "$statusUpdating" == "False" ] && [ "$statusDegraded" == "False" ]; then
             echo "MCP $mcp is ready"

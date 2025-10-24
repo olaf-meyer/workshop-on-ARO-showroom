@@ -195,7 +195,7 @@ Openshift sandboxed containers installs `kata-remote` as a _secondary, optional_
 
 [IMPORTANT]
 ====
-Creating the KataConfig CR automatically reboots the worker nodes. According with the documentation, the reboot can take from 10 to more than 60 minutes. **In this ARO workshop, it should take around 15 minutes**.
+Creating the KataConfig CR automatically reboots the worker nodes. **In this ARO workshop, it should take around 15 minutes to install everything (job included)**.
 ====
 
 . Create a KataConfig CDR and apply it. By default all worker nodes will be configured to run CoCo workloads. If you want to restrict it to specific worker nodes, then add any specific label to those worker does and update the `kataconfigPoolSelector`. For this workshop, we will apply a label `workerType=kataWorker` to a single worker node and install kata binaries only in there.
