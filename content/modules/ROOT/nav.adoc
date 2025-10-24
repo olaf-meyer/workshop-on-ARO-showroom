@@ -29,14 +29,15 @@
 *** xref:02-configure-osc.adoc#pp-cm[Create the peer-pods configmap]
 *** xref:02-configure-osc.adoc#pp-key[Create the SSH key]
 *** xref:02-configure-osc.adoc#pp-kc[Create the KataConfig]
-** xref:03-deploy-workload.adoc[5. Deploy a sample pod]
-*** xref:03-deploy-workload.adoc#options[Available options]
-*** xref:03-deploy-workload.adoc#example[Hello-openshift example]
-*** xref:03-deploy-workload.adoc#verify[Verify the pod is in a VM]
-*** xref:03-deploy-workload.adoc#verify-security[Verify the CoCo pod security restrictions]
-*** xref:03-deploy-workload.adoc#verify-security[Retrieve a secret from Trustee (attestation)]
-*** xref:03-deploy-workload.adoc#destroy[Destroy the hello-openshift pod]
 
 * xref:index-user.adoc[User guide]
+
+* xref:03-deploy-workload.adoc[Deploy a sample pod]
+** xref:03-deploy-workload.adoc#options[Available options]
+** xref:03-deploy-workload.adoc#example[Hello-openshift example]
+** xref:03-deploy-workload.adoc#verify[Verify the pod is in a VM]
+** xref:03-deploy-workload.adoc#verify-security[Verify the CoCo pod security restrictions]
+** xref:03-deploy-workload.adoc#verify-security[Retrieve a secret from Trustee (attestation)]
+** xref:03-deploy-workload.adoc#destroy[Destroy the hello-openshift pod]
 
 * xref:conclusion.adoc[Conclusion and what's next]
