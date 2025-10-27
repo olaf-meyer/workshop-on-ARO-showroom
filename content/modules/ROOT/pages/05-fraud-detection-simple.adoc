@@ -183,8 +183,8 @@ echo "https://${FD_ROUTE}"
 Starting from `fraud-detection/0_intro.ipynb`, go through the various notebooks. Specifically:
 
 * `fraud-detection/0_intro.ipynb`: show that the confidential hardware is present
-* `fraud-detection/5_download_data.ipynb`: download encrypted datasets
-* `fraud-detection/6_decrypt_data.ipynb`: fetch key through attestation and decrypt the datasets
-* `fraud-detection/7_run_model.ipynb`: run the model
-* `fraud-detection/8_cleanup.ipynb`: clean everything to restart the demo
+* `fraud-detection/1_download_data.ipynb`: download encrypted datasets
+* `fraud-detection/2_decrypt_data.ipynb`: fetch key through attestation and decrypt the datasets
+* `fraud-detection/3_run_model.ipynb`: run the model
+* `fraud-detection/4_cleanup.ipynb`: clean everything to restart the demo
 
