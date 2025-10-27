@@ -151,7 +151,6 @@ metadata:
   labels:
     app: fraud-encrypted-datasets
   annotations:
-    # increase timeout for long-running notebook connections
     haproxy.router.openshift.io/timeout: "1h"
 spec:
   to:
