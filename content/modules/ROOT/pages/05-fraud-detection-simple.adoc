@@ -25,6 +25,16 @@ The entire process relies on remote attestation to securely release the decrypti
 . The container uses the received key to decrypt the credit card datasets in memory.
 . The (now-decrypted) private data is fed into the public model for processing, all within the protected container.
 
+== Prerequisites
+
+Before starting this notebook, we need to increase the default root disk size of CoCo CVMs:
+
+[source,sh,role=execute]
+----
+oc patch configmap peer-pods-cm -n openshift-sandboxed-containers-operator  --type=merge -p '{"data":{"ROOT_VOLUME_SIZE":"10"}}'
+oc set env ds/osc-caa-ds -n openshift-sandboxed-containers-operator REBOOT="$(date)"
+----
+
 == Start the Jupyter notebook
 
 Let's create a notebook and run it as CoCo. Notice once again the only difference with a normal deployment is `runtimeClassName: kata-remote`.
@@ -69,7 +79,7 @@ spec:
         mountPath: /home/jovyan
   containers:
     - name: jupyter
-      image: quay.io/jupyter/datascience-notebook:latest
+      image: quay.io/jupyter/base-notebook:latest
       imagePullPolicy: IfNotPresent
       args:
         - start-notebook.sh
@@ -80,6 +90,8 @@ spec:
       env:
         - name: JUPYTER_ENABLE_LAB
           value: "yes"
+        - name: AZURE_ACCOUNT_SAS
+          value: "?sp=r&st=2025-10-27T15:42:27Z&se=2028-10-27T22:57:27Z&spr=https&sv=2024-11-04&sr=b&sig=vjaRotd7de%2B3QwlzHVaHF2GVyehw1xb3fFiXe9E7YOI%3D"
       volumeMounts:
         - name: repo-storage
           mountPath: /home/jovyan
