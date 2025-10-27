@@ -1,0 +1,190 @@
+= Fraud-detection with encrypted data
+
+This example demonstrates a typical Confidential Containers (CoCo) deployment using a fraud-detection application. The primary goal is to show how CoCo protects **data in use**, even when the application code itself is public.
+
+We will run a model to perform offline credit-card fraud detection, based on the following scenario.
+
+== Scenario: Protecting Data, Not Code
+
+This deployment operates on two key assumptions:
+
+* The Model is Public: The fraud-detection model itself is not secret. It was pre-trained on public data and does not require protection.
+* The Data is Private: The credit card datasets contain sensitive customer information and must be protected. This data has been securely collected and encrypted before entering our untrusted cluster.
+
+A similar demonstration was shown at Red Hat Summit 2025, which used Confidential Virtual Machines (CVMs) instead of CoCo. You can learn more from this https://www.redhat.com/en/blog/rhel-confidential-virtual-machines-protect-ai-workloads-microsoft-azure[blogpost, window=blank] and https://www.youtube.com/watch?v=ty21OQhwgvk[video, window=blank].
+
+== The Confidential Workflow
+
+The entire process relies on remote attestation to securely release the decryption key to the running container.
+
+. The fraud-detection container starts, pulling the public model and the encrypted datasets.
+. The decryption key is not present in the container; it is held remotely by Trustee, our key-release service.
+.. (Note: The key was already added in Trustee xref:02-configure-trustee.adoc#trustee-key[when adding the secrets], or was done automatically by the install script. For this demo, Trustee runs in the same cluster, but in production, it would be in a separate, secure domain.)
+. The container performs remote attestation, generating a cryptographic proof that it is a genuine Confidential Container running on a secure, trusted platform.
+. It sends this proof to Trustee. Only after Trustee verifies that the container is secure does it release the decryption key.
+. The container uses the received key to decrypt the credit card datasets in memory.
+. The (now-decrypted) private data is fed into the public model for processing, all within the protected container.
+
+== Start the Jupyter notebook
+
+Let's create a notebook and run it as CoCo. Notice once again the only difference with a normal deployment is `runtimeClassName: kata-remote`.
+
+[source,sh,role=execute]
+----
+oc apply -f-<<EOF
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fraud-detection
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fraud-encrypted-datasets
+  namespace: fraud-detection
+  labels:
+    app: fraud-encrypted-datasets
+spec:
+  runtimeClassName: kata-remote
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 100
+    runAsNonRoot: true
+    fsGroup: 100
+    seccompProfile:
+      type: RuntimeDefault
+  initContainers:
+    - name: git-clone
+      image: docker.io/alpine/git:latest
+      env:
+      - name: BRANCH_NAME
+        value: "coco_workshop"
+      workingDir: /home/jovyan
+      command: ["/bin/sh", "-c"]
+      args:
+      - "cd /home/jovyan && git clone https://github.com/confidential-devhub/fraud-detection-on-cvms.git && cd fraud-detection-on-cvms && git checkout $BRANCH_NAME"
+      volumeMounts:
+      - name: repo-storage
+        mountPath: /home/jovyan
+  containers:
+    - name: jupyter
+      image: quay.io/jupyter/datascience-notebook:latest
+      imagePullPolicy: IfNotPresent
+      args:
+        - start-notebook.sh
+        - "--ServerApp.base_url=/"
+        - "--ServerApp.port=8888"
+        - "--ServerApp.token=aro_workshop123"
+        - "--ServerApp.allow_origin=*"
+      env:
+        - name: JUPYTER_ENABLE_LAB
+          value: "yes"
+      volumeMounts:
+        - name: repo-storage
+          mountPath: /home/jovyan
+      ports:
+        - containerPort: 8888
+          name: http
+      readinessProbe:
+        httpGet:
+          path: /api
+          port: http
+        initialDelaySeconds: 10
+        periodSeconds: 5
+        timeoutSeconds: 2
+      livenessProbe:
+        httpGet:
+          path: /api
+          port: http
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        timeoutSeconds: 2
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 100
+        capabilities:
+          drop:
+            - ALL
+        seccompProfile:
+          type: RuntimeDefault
+  volumes:
+    - name: repo-storage
+      emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fraud-encrypted-datasets-service
+  namespace: fraud-detection
+  labels:
+    app: fraud-encrypted-datasets
+spec:
+  selector:
+    app: fraud-encrypted-datasets
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: http
+      name: http
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: fraud-encrypted-datasets-route
+  namespace: fraud-detection
+  labels:
+    app: fraud-encrypted-datasets
+  annotations:
+    # increase timeout for long-running notebook connections
+    haproxy.router.openshift.io/timeout: "1h"
+spec:
+  to:
+    kind: Service
+    name: fraud-encrypted-datasets-service
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+EOF
+----
+
+Switch to the newly created `fraud-detection` namespace
+
+[source,sh,role=execute]
+----
+oc project fraud-detection
+----
+
+Wait that the pod is created.
+[source,sh,role=execute]
+----
+watch oc get pods/fraud-encrypted-datasets
+----
+The pod is ready when the `STATUS` is in `Running`.
+
+The jupyter notebook will be available at the following URL and the login password is `aro_workshop123`:
+[source,sh,role=execute]
+----
+FD_ROUTE=$(oc get route fraud-encrypted-datasets-route -n fraud-detection -o jsonpath='{.spec.host}')
+echo ""
+
+echo "Click on the following URL to open the notebook in a new tab:"
+echo "https://${FD_ROUTE}"
+----
+
+== Run the notebook
+
+Starting from `fraud-detection/0_intro.ipynb`, go through the various notebooks. Specifically:
+
+* `fraud-detection/0_intro.ipynb`: show that the confidential hardware is present
+* `fraud-detection/5_download_data.ipynb`: download encrypted datasets
+* `fraud-detection/6_decrypt_data.ipynb`: fetch key through attestation and decrypt the datasets
+* `fraud-detection/7_run_model.ipynb`: run the model
+* `fraud-detection/8_cleanup.ipynb`: clean everything to restart the demo
+

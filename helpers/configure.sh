@@ -642,6 +642,15 @@ oc create secret generic $SECRET_NAME \
   --from-file key2=key.bin \
   -n trustee-operator-system
 
+curl -L https://people.redhat.com/eesposit/fd-workshop-key.bin -o fd.bin
+FD_SECRET_NAME=fraud-detection
+
+oc create secret generic $FD_SECRET_NAME \
+  --from-file dataset_key=fd.bin \
+  -n trustee-operator-system
+
+rm -rf fd.bin key.bin
+
 SECRET=$(podman run -it quay.io/confidential-devhub/coco-tools:0.2.0 /tools/secret seal vault --resource-uri kbs:///default/${SECRET_NAME}/key2 --provider kbs | grep -v "Warning")
 
 oc create secret generic sealed-secret --from-literal=key2=$SECRET -n default
@@ -666,7 +675,7 @@ spec:
   kbsAuthSecretName: kbs-auth-public-key
   kbsDeploymentType: AllInOneDeployment
   kbsRvpsRefValuesConfigMapName: rvps-reference-values
-  kbsSecretResources: ["$SECRET_NAME", "security-policy", "attestation-token", "$SIGNATURE_SECRET_NAME"]
+  kbsSecretResources: ["$SECRET_NAME", "$FD_SECRET_NAME", "security-policy", "attestation-token", "$SIGNATURE_SECRET_NAME"]
   kbsResourcePolicyConfigMapName: resource-policy
   kbsAttestationPolicyConfigMapName: attestation-policy
   kbsHttpsKeySecretName: kbs-https-key

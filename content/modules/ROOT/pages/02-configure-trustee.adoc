@@ -703,7 +703,7 @@ oc apply -f resourcepolicy-configmap.yaml
 
 Populate Trustee with secret(s) that are then managed by the above policies and if attestation is successful, are sent to the client(s) (CoCo). For example, a Confidential Container image/workload could be encrypted, and the key to decrypt it is stored inside the Trustee and provided only if attestation is successful. In this section, we will show how to add the key into Trustee.
 
-**Prerequisites:** You have created one or more custom keys. In this workshop, we will also create 2 keys.
+**Prerequisites:** You have created one or more custom keys. In this workshop, we will  create 2 keys.
 
 Define secret name and values. In this example, the `kbsres1` secret has two entries (`key1`, `key2`), which the clients retrieve. You can add additional secrets according to your requirements by using the same format.
 
@@ -732,6 +732,8 @@ oc create secret generic $SECRET_NAME \
   --from-literal key1=Confidential_Secret! \
   --from-file key2=key.bin \
   -n trustee-operator-system
+
+rm key.bin
 ----
 
 Note that `kbsres1` will be later used in the xref:02-configure-trustee.adoc#trustee-kbsconfig[KbsConfig]
@@ -743,6 +745,19 @@ Now, prepare the `key2` sealed secret. Note that this secret is uploaded in the 
 SECRET=$(podman run -it quay.io/confidential-devhub/coco-tools:0.2.0 /tools/secret seal vault --resource-uri kbs:///default/${SECRET_NAME}/key2 --provider kbs | grep -v "Warning")
 
 oc create secret generic sealed-secret --from-literal=key2=$SECRET -n default
+----
+
+To simplify the examples coming after setup, let's also automatically add some other keys:
+[source,sh,role=execute]
+----
+curl -L https://people.redhat.com/eesposit/fd-workshop-key.bin -o fd.bin
+FD_SECRET_NAME=fraud-detection
+
+oc create secret generic $FD_SECRET_NAME \
+  --from-file dataset_key=fd.bin \
+  -n trustee-operator-system
+
+rm -rf fd.bin
 ----
 
 [#trustee-kbsconfig]
@@ -769,7 +784,7 @@ spec:
   kbsAuthSecretName: kbs-auth-public-key
   kbsDeploymentType: AllInOneDeployment
   kbsRvpsRefValuesConfigMapName: rvps-reference-values
-  kbsSecretResources: ["$SECRET_NAME", "security-policy", "attestation-token", "$SIGNATURE_SECRET_NAME"]
+  kbsSecretResources: ["$SECRET_NAME", "$FD_SECRET_NAME", "security-policy", "attestation-token", "$SIGNATURE_SECRET_NAME"]
   kbsResourcePolicyConfigMapName: resource-policy
   kbsAttestationPolicyConfigMapName: attestation-policy
   kbsHttpsKeySecretName: kbs-https-key

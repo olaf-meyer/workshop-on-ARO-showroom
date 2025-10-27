@@ -40,4 +40,6 @@
 ** xref:03-deploy-workload.adoc#verify-security[Retrieve a secret from Trustee (attestation)]
 ** xref:03-deploy-workload.adoc#destroy[Destroy the hello-openshift pod]
 
+* xref:04-fraud-detection-simple.adoc[Fraud-detection in a jupyter notebook]
+
 * xref:conclusion.adoc[Conclusion and what's next]
