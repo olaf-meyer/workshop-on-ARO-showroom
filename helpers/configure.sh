@@ -765,8 +765,8 @@ metadata:
 data:
   CLOUD_PROVIDER: "azure"
   VXLAN_PORT: "9000"
-  AZURE_INSTANCE_SIZES: "Standard_DC4as_v5,Standard_DC4ads_v5,Standard_DC4es_v5,Standard_DC4eds_v5"
-  AZURE_INSTANCE_SIZE: "Standard_DC4as_v5"
+  AZURE_INSTANCE_SIZES: "Standard_DC4as_v5,Standard_DC4es_v5"
+  AZURE_INSTANCE_SIZE: "Standard_DC4es_v5"
   AZURE_RESOURCE_GROUP: "${ARO_RESOURCE_GROUP}"
   AZURE_REGION: "${ARO_REGION}"
   AZURE_SUBNET_ID: "${ARO_WORKER_SUBNET_ID}"
@@ -827,6 +827,9 @@ echo "############################ Wait for kata-remote + job ##################
 
 # Wait for runtimeclass kata-remote to be ready
 wait_for_runtimeclass kata-remote || exit 1
+
+# TODO: Temporary fix
+oc set image daemonset.apps/osc-caa-ds -n openshift-sandboxed-containers-operator caa-pod=quay.io/snir/cloud-api-adaptor:hddtossd-0.14.0
 
 # echo "############################ Update kata rpm ########################"
 # curl -L https://raw.githubusercontent.com/confidential-devhub/workshop-on-ARO-showroom/refs/heads/main/helpers/update-kata-rpm.sh -o update-kata-rpm.sh
