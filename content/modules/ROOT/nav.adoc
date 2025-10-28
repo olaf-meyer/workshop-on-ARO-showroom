@@ -32,7 +32,7 @@
 
 * xref:index-user.adoc[User guide]
 
-* xref:03-deploy-workload.adoc[CoCo features example (hello-openshift)]
+* xref:03-deploy-workload.adoc[Features example (hello-openshift)]
 
 * xref:05-fraud-detection-simple.adoc[Fraud-detection (notebook)]
 
