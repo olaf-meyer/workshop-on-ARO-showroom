@@ -25,10 +25,18 @@ All you need to do is download this script, and let it run till it finishes.
 
 The following scripts sets everything just as in the xref:index-admin.adoc[admin guide], with the following:
 
-* Container signature policy accepts any signed/unsigned image. Refer xref:02-configure-trustee.adoc#trustee-cisvp[here] if you want to change it.
-* `INITDATA` allows logs, but disallows generic exec. The only command available in exec are `curl` for `kbsres1` keys, to run the `hello-openshift` example. Refer xref:02-configure-trustee.adoc#trustee-ip[here] if you want to change `INITDATA` and remember to update PCR8 in the xref:02-configure-trustee.adoc#trustee-refval[reference values].
-* Trustee already has the necessary keys to run all the next examples. Refer xref:02-configure-trustee.adoc#trustee-key[here] if you want to change Trustee secrets or add new ones.
-* CoCo CVM root disk size is `10`. Refer xref:02-configure-osc.adoc#pp-cm[here (ROOT_VOLUME_SIZE)] to change it. Minimum has to be `6`. Remember to restart the `osc-caa-ds` Daemonset after changing it (look at the note at the bottom of the same section)
+* Container signature policy accepts any signed/unsigned image.
+** Refer xref:02-configure-trustee.adoc#trustee-cisvp[here] if you want to change it.
+
+* `INITDATA` allows logs, but disallows generic exec. The only command available in exec are `curl` for `kbsres1` keys, to run the `hello-openshift` example.
+** Refer xref:02-configure-trustee.adoc#trustee-ip[here] if you want to change OSC `INITDATA`.
+** Updating `INITDATA` in OSC means that we also need to update Trustee `PCR8` in the xref:02-configure-trustee.adoc#trustee-refval[reference values], otherwise attestation will fail, and then restart the Trustee deployment with `oc rollout restart deployment/trustee-deployment -n trustee-operator-system`
+
+* Trustee already has the necessary keys to run all the next examples.
+** Refer xref:02-configure-trustee.adoc#trustee-key[here] if you want to change Trustee secrets or add new ones. Remember that after the change you need to restart the Trustee deployment with `oc rollout restart deployment/trustee-deployment -n trustee-operator-system`.
+
+* CoCo CVM root disk size is `10`.
+** Refer xref:02-configure-osc.adoc#pp-cm[here (`ROOT_VOLUME_SIZE`)] to change it. Minimum has to be `6`. Remember that after the change you need to restart the `osc-caa-ds` Daemonset  with `oc set env ds/osc-caa-ds -n openshift-sandboxed-containers-operator REBOOT="$(date)"`.
 
 [source,sh,role=execute]
 ----
