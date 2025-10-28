@@ -35,9 +35,9 @@ spec:
   containers:
     - name: jupyter
       # image pre-built with all required pip packages + curl
-      image: quay.io/confidential-devhub/base-notebook:latest
+      # image: quay.io/confidential-devhub/base-notebook:latest
       # original image:
-      # image: quay.io/jupyter/base-notebook:latest
+      image: quay.io/jupyter/base-notebook:latest
       imagePullPolicy: IfNotPresent
       args:
         - start-notebook.sh
