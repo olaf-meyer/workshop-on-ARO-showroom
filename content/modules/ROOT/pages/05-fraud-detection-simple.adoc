@@ -4,7 +4,7 @@ This example demonstrates a typical Confidential Containers (CoCo) deployment us
 
 We will run a model to perform offline credit-card fraud detection, based on the following scenario.
 
-== Scenario: Protecting Data, Not Code
+== Protecting Data, Not Code
 
 This deployment operates on two key assumptions:
 
@@ -13,13 +13,24 @@ This deployment operates on two key assumptions:
 
 A similar demonstration was shown at Red Hat Summit 2025, which used Confidential Virtual Machines (CVMs) instead of CoCo. You can learn more from this https://www.redhat.com/en/blog/rhel-confidential-virtual-machines-protect-ai-workloads-microsoft-azure[blogpost, window=blank] and https://www.youtube.com/watch?v=ty21OQhwgvk[video, window=blank].
 
+== Assumptions
+
+In this demo we are not going to show the steps done in the secure environment, to simplify the user experience and not confuse the secure env with the untrusted cluster.
+
+In the secure env we:
+
+* Generate, encrypt and upload the credit cards dataset to the Azure blob storage. In this workshop, it's a publicly accessible blob containing only the encrypted dataset.
+* Install and configure Trustee with the key used in the previous point. In this workshop, Trustee is running in the same untrusted cluster but it shouldn't.
+
+These two steps above are already prepared for you, no need to do anything at this point.
+
 == The Confidential Workflow
 
-The entire process relies on remote attestation to securely release the decryption key to the running container.
+The entire process relies on remote attestation to securely release the decryption key to the running container. In this demo, we will run the whole workflow.
 
 . The fraud-detection container starts, pulling the public model and the encrypted datasets.
 . The decryption key is not present in the container; it is held remotely by Trustee, our key-release service.
-.. (Note: The key was already added in Trustee xref:02-configure-trustee.adoc#trustee-key[when adding the secrets], or was done automatically by the install script. For this demo, Trustee runs in the same cluster, but in production, it would be in a separate, secure domain.)
+.. The key was already added in Trustee xref:02-configure-trustee.adoc#trustee-key[when adding the secrets], or was done automatically by the install script. For this demo, Trustee runs in the same cluster, but in production, it would be in a separate, secure domain.
 . The container performs remote attestation, generating a cryptographic proof that it is a genuine Confidential Container running on a secure, trusted platform.
 . It sends this proof to Trustee. Only after Trustee verifies that the container is secure does it release the decryption key.
 . The container uses the received key to decrypt the credit card datasets in memory.
@@ -37,132 +48,11 @@ oc set env ds/osc-caa-ds -n openshift-sandboxed-containers-operator REBOOT="$(da
 
 == Start the Jupyter notebook
 
-Let's create a notebook and run it as CoCo. Notice once again the only difference with a normal deployment is `runtimeClassName: kata-remote`.
+Let's create a notebook and run it as CoCo. If you open the yaml link, you will notice once again the only difference with a normal deployment is `runtimeClassName: kata-remote`.
 
 [source,sh,role=execute]
 ----
-oc apply -f-<<EOF
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: fraud-detection
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: fraud-encrypted-datasets
-  namespace: fraud-detection
-  labels:
-    app: fraud-encrypted-datasets
-spec:
-  runtimeClassName: kata-remote
-  securityContext:
-    runAsUser: 1000
-    runAsGroup: 100
-    runAsNonRoot: true
-    fsGroup: 100
-    seccompProfile:
-      type: RuntimeDefault
-  initContainers:
-    - name: git-clone
-      image: docker.io/alpine/git:latest
-      env:
-      - name: BRANCH_NAME
-        value: "coco_workshop"
-      workingDir: /home/jovyan
-      command: ["/bin/sh", "-c"]
-      args:
-      - "cd /home/jovyan && git clone https://github.com/confidential-devhub/fraud-detection-on-cvms.git && cd fraud-detection-on-cvms && git checkout $BRANCH_NAME"
-      volumeMounts:
-      - name: repo-storage
-        mountPath: /home/jovyan
-  containers:
-    - name: jupyter
-      image: quay.io/jupyter/base-notebook:latest
-      imagePullPolicy: IfNotPresent
-      args:
-        - start-notebook.sh
-        - "--ServerApp.base_url=/"
-        - "--ServerApp.port=8888"
-        - "--ServerApp.token=aro_workshop123"
-        - "--ServerApp.allow_origin=*"
-      env:
-        - name: JUPYTER_ENABLE_LAB
-          value: "yes"
-        - name: AZURE_ACCOUNT_SAS
-          value: "?sp=r&st=2025-10-27T15:42:27Z&se=2028-10-27T22:57:27Z&spr=https&sv=2024-11-04&sr=b&sig=vjaRotd7de%2B3QwlzHVaHF2GVyehw1xb3fFiXe9E7YOI%3D"
-      volumeMounts:
-        - name: repo-storage
-          mountPath: /home/jovyan
-      ports:
-        - containerPort: 8888
-          name: http
-      readinessProbe:
-        httpGet:
-          path: /api
-          port: http
-        initialDelaySeconds: 10
-        periodSeconds: 5
-        timeoutSeconds: 2
-      livenessProbe:
-        httpGet:
-          path: /api
-          port: http
-        initialDelaySeconds: 30
-        periodSeconds: 10
-        timeoutSeconds: 2
-      securityContext:
-        allowPrivilegeEscalation: false
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 100
-        capabilities:
-          drop:
-            - ALL
-        seccompProfile:
-          type: RuntimeDefault
-  volumes:
-    - name: repo-storage
-      emptyDir: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: fraud-encrypted-datasets-service
-  namespace: fraud-detection
-  labels:
-    app: fraud-encrypted-datasets
-spec:
-  selector:
-    app: fraud-encrypted-datasets
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: http
-      name: http
-  type: ClusterIP
----
-apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  name: fraud-encrypted-datasets-route
-  namespace: fraud-detection
-  labels:
-    app: fraud-encrypted-datasets
-  annotations:
-    haproxy.router.openshift.io/timeout: "1h"
-spec:
-  to:
-    kind: Service
-    name: fraud-encrypted-datasets-service
-    weight: 100
-  port:
-    targetPort: http
-  tls:
-    termination: edge
-    insecureEdgeTerminationPolicy: Redirect
-EOF
+oc apply -f https://raw.githubusercontent.com/confidential-devhub/workshop-on-ARO-showroom/refs/heads/main/helpers/fraud-encrypted-datasets/notebook.yaml
 ----
 
 Switch to the newly created `fraud-detection` namespace

@@ -776,7 +776,7 @@ data:
   INITDATA: "${INITDATA}"
   PEERPODS_LIMIT_PER_NODE: "10"
   TAGS: "key1=value1,key2=value2"
-  ROOT_VOLUME_SIZE: "6"
+  ROOT_VOLUME_SIZE: "10"
   AZURE_IMAGE_ID: ""
 EOF
 
