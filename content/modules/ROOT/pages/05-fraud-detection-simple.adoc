@@ -40,6 +40,11 @@ The entire process relies on remote attestation to securely release the decrypti
 
 Let's create a notebook and run it as CoCo. If you open the yaml link, you will notice once again the only difference with a normal deployment is `runtimeClassName: kata-remote`.
 
+This notebook specifically uses python sdk to download the encrypted data from Azure for two reasons:
+
+* Closely align with regular interactive AI workflows which uses python SDKs to download data from s3, azure, minio etc.
+* Provides an example of programmatic storage access for AI workloads when using the peer-pods approach.
+
 [source,sh,role=execute]
 ----
 oc apply -f https://raw.githubusercontent.com/confidential-devhub/workshop-on-ARO-showroom/refs/heads/main/helpers/fraud-encrypted-datasets/notebook.yaml
