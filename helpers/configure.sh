@@ -427,14 +427,22 @@ echo "PCR 8:" $PCR8_HASH
 echo "################################################"
 
 # 1. Prepare required files
-IMAGE=$(oc get csv -n openshift-sandboxed-containers-operator -o yaml \
-  | grep RELATED_IMAGE_PODVM_OCI -A1 \
-  | awk '/value:/ {print $2}')
 
+# Pick the latest podvm image, as we freshly installed the cluster
+IMAGE="registry.redhat.io/openshift-sandboxed-containers/osc-dm-verity-image:latest"
+# alternatively, use the operator-version tag:
+# OSC_VERSION=1.10.3
+# IMAGE="registry.redhat.io/openshift-sandboxed-containers/osc-dm-verity-image:${OSC_VERSION}"
+
+# Download the pull secret from openshig
 oc get -n openshift-config secret/pull-secret -o json \
 | jq -r '.data.".dockerconfigjson"' \
 | base64 -d \
 | jq '.' > cluster-pull-secret.json
+# alternatively if you don't have access to the pull-secret:
+# podman login registry.redhat.io
+# Username: {REGISTRY-SERVICE-ACCOUNT-USERNAME}
+# Password: {REGISTRY-SERVICE-ACCOUNT-PASSWORD}
 
 # On the ARO workshop, we don't have enough space for podman.
 # Use a different folder.
