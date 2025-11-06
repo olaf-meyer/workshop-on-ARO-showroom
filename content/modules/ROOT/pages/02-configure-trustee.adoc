@@ -407,6 +407,7 @@ Let's download the measurements from Redhat and then convert them into a referen
 In order to download the right image, you will need to know:
 
 * The manifest list digest referencing to the podVM used in the installed OSC operator release. This is `registry.redhat.io/openshift-sandboxed-containers/osc-dm-verity-image:<OSC-VERSION>`. The digest can also be found in the https://catalog.redhat.com/en/software/containers/openshift-sandboxed-containers/osc-dm-verity-image/68765ccc0e3026f2d73b2cfd#get-this-image[Red Hat official Ecosystem Catalog, window=blank]
+
 * Authenticated access to `registry.redhat.io`. In this workshop we have access to the cluster therefore we can also use the `pull-secret` stored into `openshift-config` namespace instead of the traditional credentials.
 
 [source,sh,role=execute]
@@ -507,9 +508,9 @@ oc apply -f rvps-configmap.yaml
 
 By default, Trustee has already an attestation policy. You can overwrite the default one by creating your own attestation policy.
 
-The attestation policy follows the https://www.openpolicyagent.org/docs/policy-language[Open Policy Agent] specification.
+The attestation policy follows the https://www.openpolicyagent.org/docs/policy-language[Open Policy Agent, window=blank] specification.
 
-The policy below checks the Platform Configuration Register (PCR) values `03`, `08`, `09`, `11`, and `12` against the reference values to ensure that the Confidential Containers pod uses the specified restrictive Kata agent policy and that the Red Hat pod VM image has not been altered. The attestation process is successful only if all the values match. For details, see https://uapi-group.org/specifications/specs/linux_tpm_pcr_registry/[Linux TPM PCR Registry] in the UAPI Group Specifications documentation.
+The policy below checks the Platform Configuration Register (PCR) values `03`, `08`, `09`, `11`, and `12` against the reference values to ensure that the Confidential Containers pod uses the specified restrictive Kata agent policy and that the Red Hat pod VM image has not been altered. The attestation process is successful only if all the values match. For details, see https://uapi-group.org/specifications/specs/linux_tpm_pcr_registry/[Linux TPM PCR Registry, window=blank] in the UAPI Group Specifications documentation.
 
 [source,sh,role=execute]
 ----
@@ -638,7 +639,7 @@ oc create secret generic $SIGNATURE_SECRET_NAME \
     -n trustee-operator-system
 ----
 +
-If you want to sign your own container, refer to the https://developers.redhat.com/products/trusted-artifact-signer/overview[Red Hat Trusted Artifact Signer] or other tools to sign container images. A simple guide on how to use upstream `cosign` is xref:04-sign-pod.adoc[here].
+If you want to sign your own container, refer to the https://developers.redhat.com/products/trusted-artifact-signer/overview[Red Hat Trusted Artifact Signer, window=blank] or other tools to sign container images. A simple guide on how to use upstream `cosign` is xref:04-sign-pod.adoc[here].
 +
 Note that `$SIGNATURE_SECRET_NAME` will be later used in the xref:02-configure-trustee.adoc#trustee-kbsconfig[KbsConfig]
 +
@@ -668,7 +669,7 @@ clear
 cat security-policy-config.json
 ----
 +
-For more information on security policy, see https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md[containers-policy.json.5, window=blank] and in particular https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md#a-reasonably-locked-down-system[this example, =window=blank].
+For more information on security policy, see https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md[containers-policy.json.5, window=blank] and in particular https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md#a-reasonably-locked-down-system[this example,  window=blank].
 
 . After `security-policy-config.json` is created, upload it as a secret with the following command:
 +
