@@ -406,7 +406,9 @@ Let's download the measurements from Redhat and then convert them into a referen
 
 In order to download the right image, you will need to know:
 
-* The manifest list digest referencing to the podVM used in the installed OSC operator release. This has the format `registry.redhat.io/openshift-sandboxed-containers/osc-dm-verity-image:${OSC-VERSION}`. The digest can also be found in the https://catalog.redhat.com/en/software/containers/openshift-sandboxed-containers/osc-dm-verity-image/68765ccc0e3026f2d73b2cfd#get-this-image[Red Hat official Ecosystem Catalog, window=blank]
+* The manifest list digest referencing to the podVM used in the installed OSC operator release. This has the format `registry.redhat.io/openshift-sandboxed-containers/osc-dm-verity-image:${OSC-VERSION}`.
+
+** The digest can also be found in the https://catalog.redhat.com/en/software/containers/openshift-sandboxed-containers/osc-dm-verity-image/68765ccc0e3026f2d73b2cfd#get-this-image[Red Hat Ecosystem Catalog, window=blank]
 
 * Authenticated access to `registry.redhat.io`. In this workshop we have access to the cluster therefore we can also use the `pull-secret` stored into `openshift-config` namespace instead of the traditional credentials.
 
