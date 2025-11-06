@@ -659,7 +659,7 @@ oc create secret generic $FD_SECRET_NAME \
 
 rm -rf fd.bin key.bin
 
-SECRET=$(podman run -it quay.io/confidential-devhub/coco-tools:0.2.0 /tools/secret seal vault --resource-uri kbs:///default/${SECRET_NAME}/key2 --provider kbs | grep -v "Warning")
+SECRET=$(podman run -it quay.io/confidential-devhub/coco-tools:0.3.0 /tools/secret seal vault --resource-uri kbs:///default/${SECRET_NAME}/key2 --provider kbs | grep -v "Warning")
 
 oc create secret generic sealed-secret --from-literal=key2=$SECRET -n default
 
