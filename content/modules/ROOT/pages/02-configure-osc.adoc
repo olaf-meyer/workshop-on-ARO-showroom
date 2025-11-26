@@ -299,14 +299,10 @@ oc get pods -n openshift-sandboxed-containers-operator
 NAME                                           READY   STATUS      RESTARTS   AGE
 controller-manager-5dd87698b7-9cqbn            2/2     Running     0          17m
 openshift-sandboxed-containers-monitor-m9ffw   1/1     Running     0          30m
-openshift-sandboxed-containers-monitor-sdlz4   1/1     Running     0          30m
-openshift-sandboxed-containers-monitor-z8zh5   1/1     Running     0          30m
 operator-metrics-server-857fb654c4-z24f4       1/1     Running     0          20m
 osc-podvm-image-creation-fltm8                 0/1     Completed   0          17m
 peer-pods-webhook-65cffdd499-2nh9q             1/1     Running     0          2m59s
 peer-pods-webhook-65cffdd499-8x684             1/1     Running     0          2m59s
-osc-caa-ds-hl7fb            1/1     Running     0          2m59s
-osc-caa-ds-s6xkk            1/1     Running     0          2m59s
 osc-caa-ds-vkfm5            1/1     Running     0          2m59s
 ----
 
