@@ -119,7 +119,7 @@ data:
   INITDATA: "${INITDATA}"
   PEERPODS_LIMIT_PER_NODE: "10"
   TAGS: "key1=value1,key2=value2"
-  ROOT_VOLUME_SIZE: "6"
+  ROOT_VOLUME_SIZE: "10"
   AZURE_IMAGE_ID: ""
 EOF
 
@@ -159,13 +159,11 @@ oc apply -f pp-cm.yaml
 
 [NOTE]
 ====
-If you later update the peer pods config map, you must restart the osc-caa-ds daemonset to apply the changes.
-After you update the config map, apply the manifest. Then restart the cloud-api-adaptor pods by running the following command:
+If you later update the peer pods config map, you must also restart the `osc-caa-ds` daemonset to apply the changes:
 [source,sh,role=execute]
 ----
 oc set env ds/osc-caa-ds -n openshift-sandboxed-containers-operator REBOOT="$(date)"
 ----
-Keep in mind that restarting the daemonset recreates the peer pods, it does not update the existing pods
 ====
 
 [#pp-key]
@@ -312,5 +310,14 @@ osc-caa-ds-s6xkk            1/1     Running     0          2m59s
 osc-caa-ds-vkfm5            1/1     Running     0          2m59s
 ----
 
-
 This is it! Now the cluster is ready to run workloads with `kata-remote` `RuntimeClass`!
+
+== Temporary hack pre-OSC 1.11
+
+Until OSC 1.11 is released (end november 2025), there is a temporary fix required for CoCo on Azure/ARO:
+
+[source,sh,role=execute]
+----
+oc set image daemonset.apps/osc-caa-ds -n openshift-sandboxed-containers-operator caa-pod=quay.io/snir/cloud-api-adaptor:hddtossd-0.14.0
+----
+

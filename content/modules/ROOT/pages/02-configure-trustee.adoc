@@ -4,6 +4,15 @@ Now that the Trustee operator is installed, we need to set it up.
 
 Reminder: You can assume that **everything running in the trustee-operator-sysem namespace should run in a trusted, separate environment**. Because of the limitations of this ARO workshop, it is not possible to set up two clusters.
 
+[NOTE]
+====
+If you later update any of the Trustee secrets/configmaps/KbsConfig, you must restart the `trustee-deployment` deployment to apply the changes.
+[source,sh,role=execute]
+----
+oc rollout restart deployment/trustee-deployment -n trustee-operator-system
+----
+====
+
 [#trustee-keys]
 == Create the required keys
 
@@ -391,21 +400,37 @@ In the sections below, we will elencate how to set up all these options, but for
 
 You can configure reference values for the Reference Value Provider Service (RVPS) by specifying the trusted digests of your hardware platform.
 
-Red Hat currently ships an official CoCo podVM image together with its measurements. Therefore we simply need to insert the values into `rvps-configmap.yaml`. Such values ensure that CoCo is running that specific image, with a RH kernel and specific features like initdata policy enabled.
+Red Hat currently ships an official CoCo podVM image (Confidential VM disk pre-installed and configured with CoCo components)  together with its measurements. Therefore we simply need to insert the values into `rvps-configmap.yaml`. Such values ensure that CoCo is running that specific image, with a RH kernel and specific features like initdata policy enabled.
 
-Let's download the measurements from Redhat and then convert them into a reference value configmap:
+Let's download the measurements from Redhat and then convert them into a reference value configmap.
+
+In order to download the right image, you will need to know:
+
+* The manifest list digest referencing to the podVM used in the installed OSC operator release. This has the format `registry.redhat.io/openshift-sandboxed-containers/osc-dm-verity-image:${OSC-VERSION}`.
+
+** The digest can also be found in the https://catalog.redhat.com/en/software/containers/openshift-sandboxed-containers/osc-dm-verity-image/68765ccc0e3026f2d73b2cfd#get-this-image[Red Hat Ecosystem Catalog, window=blank]
+
+* Authenticated access to `registry.redhat.io`. In this workshop we have access to the cluster therefore we can also use the `pull-secret` stored into `openshift-config` namespace instead of the traditional credentials.
 
 [source,sh,role=execute]
 ----
 # 1. Prepare required files
-IMAGE=$(oc get csv -n openshift-sandboxed-containers-operator -o yaml \
-  | grep RELATED_IMAGE_PODVM_OCI -A1 \
-  | awk '/value:/ {print $2}')
 
+# Pick the latest podvm image, as we freshly installed the cluster
+IMAGE="registry.redhat.io/openshift-sandboxed-containers/osc-dm-verity-image:latest"
+# alternatively, use the operator-version tag:
+# OSC_VERSION=1.10.3
+# IMAGE="registry.redhat.io/openshift-sandboxed-containers/osc-dm-verity-image:${OSC_VERSION}"
+
+# Download the pull secret from openshig
 oc get -n openshift-config secret/pull-secret -o json \
 | jq -r '.data.".dockerconfigjson"' \
 | base64 -d \
 | jq '.' > cluster-pull-secret.json
+# alternatively if you don't have access to the pull-secret:
+# podman login registry.redhat.io
+# Username: {REGISTRY-SERVICE-ACCOUNT-USERNAME}
+# Password: {REGISTRY-SERVICE-ACCOUNT-PASSWORD}
 
 # On the ARO workshop, we don't have enough space for podman.
 # Use a different folder.
@@ -485,9 +510,9 @@ oc apply -f rvps-configmap.yaml
 
 By default, Trustee has already an attestation policy. You can overwrite the default one by creating your own attestation policy.
 
-The attestation policy follows the https://www.openpolicyagent.org/docs/policy-language[Open Policy Agent] specification.
+The attestation policy follows the https://www.openpolicyagent.org/docs/policy-language[Open Policy Agent, window=blank] specification.
 
-The policy below checks the Platform Configuration Register (PCR) values `03`, `08`, `09`, `11`, and `12` against the reference values to ensure that the Confidential Containers pod uses the specified restrictive Kata agent policy and that the Red Hat pod VM image has not been altered. The attestation process is successful only if all the values match. For details, see https://uapi-group.org/specifications/specs/linux_tpm_pcr_registry/[Linux TPM PCR Registry] in the UAPI Group Specifications documentation.
+The policy below checks the Platform Configuration Register (PCR) values `03`, `08`, `09`, `11`, and `12` against the reference values to ensure that the Confidential Containers pod uses the specified restrictive Kata agent policy and that the Red Hat pod VM image has not been altered. The attestation process is successful only if all the values match. For details, see https://uapi-group.org/specifications/specs/linux_tpm_pcr_registry/[Linux TPM PCR Registry, window=blank] in the UAPI Group Specifications documentation.
 
 [source,sh,role=execute]
 ----
@@ -616,7 +641,7 @@ oc create secret generic $SIGNATURE_SECRET_NAME \
     -n trustee-operator-system
 ----
 +
-If you want to sign your own container, refer to the https://developers.redhat.com/products/trusted-artifact-signer/overview[Red Hat Trusted Artifact Signer] or other tools to sign container images. A simple guide on how to use upstream `cosign` is xref:04-sign-pod.adoc[here].
+If you want to sign your own container, refer to the https://developers.redhat.com/products/trusted-artifact-signer/overview[Red Hat Trusted Artifact Signer, window=blank] or other tools to sign container images. A simple guide on how to use upstream `cosign` is xref:04-sign-pod.adoc[here].
 +
 Note that `$SIGNATURE_SECRET_NAME` will be later used in the xref:02-configure-trustee.adoc#trustee-kbsconfig[KbsConfig]
 +
@@ -646,7 +671,7 @@ clear
 cat security-policy-config.json
 ----
 +
-For more information on security policy, see https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md[containers-policy.json.5, window=blank] and in particular https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md#a-reasonably-locked-down-system[this example, =window=blank].
+For more information on security policy, see https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md[containers-policy.json.5, window=blank] and in particular https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md#a-reasonably-locked-down-system[this example,  window=blank].
 
 . After `security-policy-config.json` is created, upload it as a secret with the following command:
 +
@@ -703,7 +728,7 @@ oc apply -f resourcepolicy-configmap.yaml
 
 Populate Trustee with secret(s) that are then managed by the above policies and if attestation is successful, are sent to the client(s) (CoCo). For example, a Confidential Container image/workload could be encrypted, and the key to decrypt it is stored inside the Trustee and provided only if attestation is successful. In this section, we will show how to add the key into Trustee.
 
-**Prerequisites:** You have created one or more custom keys. In this workshop, we will also create 2 keys.
+**Prerequisites:** You have created one or more custom keys. In this workshop, we will  create 2 keys.
 
 Define secret name and values. In this example, the `kbsres1` secret has two entries (`key1`, `key2`), which the clients retrieve. You can add additional secrets according to your requirements by using the same format.
 
@@ -732,6 +757,8 @@ oc create secret generic $SECRET_NAME \
   --from-literal key1=Confidential_Secret! \
   --from-file key2=key.bin \
   -n trustee-operator-system
+
+rm key.bin
 ----
 
 Note that `kbsres1` will be later used in the xref:02-configure-trustee.adoc#trustee-kbsconfig[KbsConfig]
@@ -740,9 +767,22 @@ Now, prepare the `key2` sealed secret. Note that this secret is uploaded in the 
 
 [source,sh,role=execute]
 ----
-SECRET=$(podman run -it quay.io/confidential-devhub/coco-tools:0.2.0 /tools/secret seal vault --resource-uri kbs:///default/${SECRET_NAME}/key2 --provider kbs | grep -v "Warning")
+SECRET=$(podman run -it quay.io/confidential-devhub/coco-tools:0.3.0 /tools/secret seal vault --resource-uri kbs:///default/${SECRET_NAME}/key2 --provider kbs | grep -v "Warning")
 
 oc create secret generic sealed-secret --from-literal=key2=$SECRET -n default
+----
+
+To simplify the examples coming after setup, let's also automatically add some other keys:
+[source,sh,role=execute]
+----
+curl -L https://people.redhat.com/eesposit/fd-workshop-key.bin -o fd.bin
+FD_SECRET_NAME=fraud-detection
+
+oc create secret generic $FD_SECRET_NAME \
+  --from-file dataset_key=fd.bin \
+  -n trustee-operator-system
+
+rm -rf fd.bin
 ----
 
 [#trustee-kbsconfig]
@@ -769,7 +809,7 @@ spec:
   kbsAuthSecretName: kbs-auth-public-key
   kbsDeploymentType: AllInOneDeployment
   kbsRvpsRefValuesConfigMapName: rvps-reference-values
-  kbsSecretResources: ["$SECRET_NAME", "security-policy", "attestation-token", "$SIGNATURE_SECRET_NAME"]
+  kbsSecretResources: ["$SECRET_NAME", "$FD_SECRET_NAME", "security-policy", "attestation-token", "$SIGNATURE_SECRET_NAME"]
   kbsResourcePolicyConfigMapName: resource-policy
   kbsAttestationPolicyConfigMapName: attestation-policy
   kbsHttpsKeySecretName: kbs-https-key

@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fraud-detection
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fraud-encrypted-datasets
+  namespace: fraud-detection
+  labels:
+    app: fraud-encrypted-datasets
+spec:
+  runtimeClassName: kata-remote
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 100
+    runAsNonRoot: true
+    fsGroup: 100
+    seccompProfile:
+      type: RuntimeDefault
+  initContainers:
+    - name: git-clone
+      image: docker.io/alpine/git:latest
+      env:
+      - name: BRANCH_NAME
+        value: "coco_workshop"
+      workingDir: /home/jovyan
+      command: ["/bin/sh", "-c"]
+      args:
+      - "cd /home/jovyan && git clone https://github.com/confidential-devhub/fraud-detection-on-cvms.git && cd fraud-detection-on-cvms && git checkout $BRANCH_NAME"
+      volumeMounts:
+      - name: repo-storage
+        mountPath: /home/jovyan
+  containers:
+    - name: jupyter
+      # image pre-built with all required pip packages + curl
+      # image: quay.io/confidential-devhub/base-notebook:latest
+      # original image:
+      image: quay.io/jupyter/base-notebook:latest
+      imagePullPolicy: IfNotPresent
+      args:
+        - start-notebook.sh
+        - "--ServerApp.base_url=/"
+        - "--ServerApp.port=8888"
+        - "--ServerApp.token=aro_workshop123"
+        - "--ServerApp.allow_origin=*"
+      env:
+        - name: JUPYTER_ENABLE_LAB
+          value: "yes"
+        - name: AZURE_ACCOUNT_SAS
+          value: "?sp=r&st=2025-10-27T15:42:27Z&se=2028-10-27T22:57:27Z&spr=https&sv=2024-11-04&sr=b&sig=vjaRotd7de%2B3QwlzHVaHF2GVyehw1xb3fFiXe9E7YOI%3D"
+      volumeMounts:
+        - name: repo-storage
+          mountPath: /home/jovyan
+      ports:
+        - containerPort: 8888
+          name: http
+      readinessProbe:
+        httpGet:
+          path: /api
+          port: http
+        initialDelaySeconds: 10
+        periodSeconds: 5
+        timeoutSeconds: 2
+      livenessProbe:
+        httpGet:
+          path: /api
+          port: http
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        timeoutSeconds: 2
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 100
+        capabilities:
+          drop:
+            - ALL
+        seccompProfile:
+          type: RuntimeDefault
+  volumes:
+    - name: repo-storage
+      emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fraud-encrypted-datasets-service
+  namespace: fraud-detection
+  labels:
+    app: fraud-encrypted-datasets
+spec:
+  selector:
+    app: fraud-encrypted-datasets
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: http
+      name: http
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: fraud-encrypted-datasets-route
+  namespace: fraud-detection
+  labels:
+    app: fraud-encrypted-datasets
+  annotations:
+    haproxy.router.openshift.io/timeout: "1h"
+spec:
+  to:
+    kind: Service
+    name: fraud-encrypted-datasets-service
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

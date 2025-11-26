@@ -181,7 +181,7 @@ aro-cluster-q5hqf-xs7zb-master-2              Standard_D8s_v3
 aro-cluster-q5hqf-xs7zb-worker-eastus1-6rlsl  Standard_D4s_v3
 aro-cluster-q5hqf-xs7zb-worker-eastus2-vt87j  Standard_D4s_v3
 aro-cluster-q5hqf-xs7zb-worker-eastus3-6dzt4  Standard_D4s_v3
-podvm-hello-openshift-c0311387                Standard_DC4as_v5
+podvm-hello-openshift-c0311387                Standard_DC4es_v5
 bastion-q5hqf                                 Standard_DS1_v2
 ----
 
@@ -190,7 +190,7 @@ Look at the various VMs. You will see there are:
 * 3 masters VM (called _aro-cluster-{guid}-<random chars>-master-0/1/2_)
 * 3 workers VM (called _aro-cluster-{guid}-<random chars>-worker-<region>-<random chars>_)
 * 1 _bastion-{guid}_ VM, used internally by the workshop infrastructure. The console on the right is actually connected to this VM, and all commands are being performed from here.
-* 1 **podvm-hello-openshift-<random chars>**. This is where the `hello-openshift` pod is actually running! Note also how the instance tyoe under `Size` column at the right side is not the same as the other VMs. It is indeed `Standard_DC4as_v5`, as specified in the OSC xref:02-configure-osc.adoc#pp-cm[ConfigMap].
+* 1 **podvm-hello-openshift-<random chars>**. This is where the `hello-openshift` pod is actually running! Note also how the instance tyoe under `Size` column at the right side is not the same as the other VMs. It is indeed `Standard_DC4es_v5`, as specified in the OSC xref:02-configure-osc.adoc#pp-cm[ConfigMap]. Looking at the https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/general-purpose/dcesv5-series[DCes Azure docs, window=blank] we can also confirm that this instance type is using confidential hardware.
 
 [#verify-security]
 == Retrieve a secret from Trustee (attestation)

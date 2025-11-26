@@ -427,14 +427,22 @@ echo "PCR 8:" $PCR8_HASH
 echo "################################################"
 
 # 1. Prepare required files
-IMAGE=$(oc get csv -n openshift-sandboxed-containers-operator -o yaml \
-  | grep RELATED_IMAGE_PODVM_OCI -A1 \
-  | awk '/value:/ {print $2}')
 
+# Pick the latest podvm image, as we freshly installed the cluster
+IMAGE="registry.redhat.io/openshift-sandboxed-containers/osc-dm-verity-image:latest"
+# alternatively, use the operator-version tag:
+# OSC_VERSION=1.10.3
+# IMAGE="registry.redhat.io/openshift-sandboxed-containers/osc-dm-verity-image:${OSC_VERSION}"
+
+# Download the pull secret from openshig
 oc get -n openshift-config secret/pull-secret -o json \
 | jq -r '.data.".dockerconfigjson"' \
 | base64 -d \
 | jq '.' > cluster-pull-secret.json
+# alternatively if you don't have access to the pull-secret:
+# podman login registry.redhat.io
+# Username: {REGISTRY-SERVICE-ACCOUNT-USERNAME}
+# Password: {REGISTRY-SERVICE-ACCOUNT-PASSWORD}
 
 # On the ARO workshop, we don't have enough space for podman.
 # Use a different folder.
@@ -642,7 +650,16 @@ oc create secret generic $SECRET_NAME \
   --from-file key2=key.bin \
   -n trustee-operator-system
 
-SECRET=$(podman run -it quay.io/confidential-devhub/coco-tools:0.2.0 /tools/secret seal vault --resource-uri kbs:///default/${SECRET_NAME}/key2 --provider kbs | grep -v "Warning")
+curl -L https://people.redhat.com/eesposit/fd-workshop-key.bin -o fd.bin
+FD_SECRET_NAME=fraud-detection
+
+oc create secret generic $FD_SECRET_NAME \
+  --from-file dataset_key=fd.bin \
+  -n trustee-operator-system
+
+rm -rf fd.bin key.bin
+
+SECRET=$(podman run -it quay.io/confidential-devhub/coco-tools:0.3.0 /tools/secret seal vault --resource-uri kbs:///default/${SECRET_NAME}/key2 --provider kbs | grep -v "Warning")
 
 oc create secret generic sealed-secret --from-literal=key2=$SECRET -n default
 
@@ -666,7 +683,7 @@ spec:
   kbsAuthSecretName: kbs-auth-public-key
   kbsDeploymentType: AllInOneDeployment
   kbsRvpsRefValuesConfigMapName: rvps-reference-values
-  kbsSecretResources: ["$SECRET_NAME", "security-policy", "attestation-token", "$SIGNATURE_SECRET_NAME"]
+  kbsSecretResources: ["$SECRET_NAME", "$FD_SECRET_NAME", "security-policy", "attestation-token", "$SIGNATURE_SECRET_NAME"]
   kbsResourcePolicyConfigMapName: resource-policy
   kbsAttestationPolicyConfigMapName: attestation-policy
   kbsHttpsKeySecretName: kbs-https-key
@@ -756,8 +773,8 @@ metadata:
 data:
   CLOUD_PROVIDER: "azure"
   VXLAN_PORT: "9000"
-  AZURE_INSTANCE_SIZES: "Standard_DC4as_v5,Standard_DC4ads_v5,Standard_DC4es_v5,Standard_DC4eds_v5"
-  AZURE_INSTANCE_SIZE: "Standard_DC4as_v5"
+  AZURE_INSTANCE_SIZES: "Standard_DC4as_v5,Standard_DC4es_v5"
+  AZURE_INSTANCE_SIZE: "Standard_DC4es_v5"
   AZURE_RESOURCE_GROUP: "${ARO_RESOURCE_GROUP}"
   AZURE_REGION: "${ARO_REGION}"
   AZURE_SUBNET_ID: "${ARO_WORKER_SUBNET_ID}"
@@ -767,7 +784,7 @@ data:
   INITDATA: "${INITDATA}"
   PEERPODS_LIMIT_PER_NODE: "10"
   TAGS: "key1=value1,key2=value2"
-  ROOT_VOLUME_SIZE: "6"
+  ROOT_VOLUME_SIZE: "10"
   AZURE_IMAGE_ID: ""
 EOF
 
@@ -818,6 +835,9 @@ echo "############################ Wait for kata-remote + job ##################
 
 # Wait for runtimeclass kata-remote to be ready
 wait_for_runtimeclass kata-remote || exit 1
+
+# TODO: Temporary fix
+oc set image daemonset.apps/osc-caa-ds -n openshift-sandboxed-containers-operator caa-pod=quay.io/snir/cloud-api-adaptor:hddtossd-0.14.0
 
 # echo "############################ Update kata rpm ########################"
 # curl -L https://raw.githubusercontent.com/confidential-devhub/workshop-on-ARO-showroom/refs/heads/main/helpers/update-kata-rpm.sh -o update-kata-rpm.sh

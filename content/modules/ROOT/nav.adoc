@@ -32,12 +32,8 @@
 
 * xref:index-user.adoc[User guide]
 
-* xref:03-deploy-workload.adoc[Deploy a sample pod]
-** xref:03-deploy-workload.adoc#options[Available options]
-** xref:03-deploy-workload.adoc#example[Hello-openshift example]
-** xref:03-deploy-workload.adoc#verify[Verify the pod is in a VM]
-** xref:03-deploy-workload.adoc#verify-security[Verify the CoCo pod security restrictions]
-** xref:03-deploy-workload.adoc#verify-security[Retrieve a secret from Trustee (attestation)]
-** xref:03-deploy-workload.adoc#destroy[Destroy the hello-openshift pod]
+* xref:03-deploy-workload.adoc[Features example (hello-openshift)]
+
+* xref:05-fraud-detection-simple.adoc[Fraud-detection (notebook)]
 
 * xref:conclusion.adoc[Conclusion and what's next]
