@@ -269,7 +269,7 @@ Expected output:
 [source,texinfo,subs="attributes"]
 ----
 NAME                            DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                      AGE
-osc-caa-ds   3         3         3       3            3           node-role.kubernetes.io/kata-oc=   22m
+osc-caa-ds   1         1         1       1            1           node-role.kubernetes.io/kata-oc=   22m
 ----
 
 . Make sure the `RuntimeClass` are created.
