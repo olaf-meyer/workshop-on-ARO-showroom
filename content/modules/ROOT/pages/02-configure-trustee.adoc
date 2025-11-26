@@ -613,7 +613,7 @@ oc apply -f tdx-config.yaml
 [#trustee-cisvp]
 === Container image signature verification policy
 
-**Purpose of this resource**: Sets wether to enforce or not the container image signature verification feature. If enabled, all containers images not signed by the trusted certificate provided in the container image verification secret will not be run.
+**Purpose of this resource**: Sets whether to enforce or not the container image signature verification feature. If enabled, all containers images not signed by the trusted certificate provided in the container image verification secret will not be run.
 
 The Trustee Operator returns this secret to the CoCo CVM components (which will run the CoCo pod) after attestation, to make sure they will perform the intended check. The CVM components will then compare the secret with the actual pod signature to determine whether to run it or not, ensuring that only trusted and authenticated container images are deployed in your environment.
 
