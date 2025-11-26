@@ -236,7 +236,7 @@ Expected output after all nodes have been updated:
 [source,texinfo,subs="attributes"]
 ----
 NAME      CONFIG                                              UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
-kata-oc   rendered-kata-oc-894630a1c9cdf3ebef8bd98c72e26608   True      False      False      3              3                   3                     0                      13m
+kata-oc   rendered-kata-oc-894630a1c9cdf3ebef8bd98c72e26608   True      False      False      1              1                   1                     0                      13m
 ----
 
 === Verification
